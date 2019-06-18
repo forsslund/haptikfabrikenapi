@@ -103,6 +103,9 @@ void FsDAQHapticDeviceThread::thread()
         }
 
         // Check for speed and loop ok.
+#if DISABLE_SAFEMODE_CHECK
+        S826_WatchdogKick(0,0x5A55AA5A); // Kick the watchdog
+#else
         uint safemode_settings;
         S826_SafeControlRead(0,&safemode_settings);
         if(!(safemode_settings & S826_CONFIG_SAF))
@@ -137,6 +140,7 @@ void FsDAQHapticDeviceThread::thread()
             }
             speedcheck_time = std::chrono::system_clock::now();
         }
+#endif
 
 
         fsRot r = kinematics.computeRotation(base,rot);

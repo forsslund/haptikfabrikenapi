@@ -60,7 +60,7 @@ int main()
 
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::woodenhaptics_v2015(),
-                               HaptikfabrikenInterface::USB);
+                               HaptikfabrikenInterface::DAQ);
     hi.open();
 
 
@@ -87,9 +87,10 @@ int main()
         fsVec3d x = v;
         fsVec3d f = -k*x;//fsVec3d(0,1,0);
 
-        hi.setForce(f);
+        //hi.setForce(f);
 
-        //hi.setCurrent(fsVec3d(1,0,0));
+        // Set actual current in Amperes to respective motor (a,b,c)
+        hi.setCurrent(fsVec3d(0.1,0.1,0.1));
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);

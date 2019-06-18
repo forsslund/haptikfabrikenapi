@@ -5,12 +5,12 @@
 # with boost and sensoray.
 #
 # For testing/experimentation uncomment (remove #) these lines (and run qmake)...
-#TEMPLATE = app
-#SOURCES += src/main.cpp
+TEMPLATE = app
+SOURCES += src/main.cpp
 
 # ...and comment these lines out:
-TEMPLATE = lib
-CONFIG += dynamiclib
+#TEMPLATE = lib
+#CONFIG += dynamiclib
 
 # For Windows we recommend static build for now:
 #CONFIG += staticlib
@@ -20,6 +20,10 @@ CONFIG += dynamiclib
 # https://doc.qt.io/qt-5/sharedlibrary.html
 # Hint: one can see the exported functions using (from vs command prompt)
 # dumpbin -headers haptikfabrikenapi.lib
+
+# This disables safemode check, which may be needed using WoodenHaptics
+DEFINES += DISABLE_SAFEMODE_CHECK
+
 
 # Rest of configuration comes here
 CONFIG += console c++11
