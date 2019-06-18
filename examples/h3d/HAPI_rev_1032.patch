@@ -1,0 +1,315 @@
+Index: build/CMakeLists.txt
+===================================================================
+--- build/CMakeLists.txt	(revision 1032)
++++ build/CMakeLists.txt	(working copy)
+@@ -138,6 +138,13 @@
+   set( HAPI_optionalLibs ${HAPI_optionalLibs} ${VirtuoseAPI_LIBRARIES} )
+ endif()
+ 
++find_package( HaptikfabrikenAPI )
++if( HaptikfabrikenAPI_FOUND )
++  set( HAVE_HAPTIKFABRIKENAPI 1 )
++  include_directories( ${HaptikfabrikenAPI_INCLUDE_DIRS} )
++  set( HAPI_optionalLibs ${HAPI_optionalLibs} ${HaptikfabrikenAPI_LIBRARIES} )
++endif()
++
+ find_package( EntactAPI )
+ if( EntactAPI_FOUND )
+   set( HAVE_ENTACTAPI 1 )
+Index: build/HAPISourceFiles.txt
+===================================================================
+--- build/HAPISourceFiles.txt	(revision 1032)
++++ build/HAPISourceFiles.txt	(working copy)
+@@ -38,6 +38,7 @@
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTriangleSet.h"
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTriangleTree.h"
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HapticViscosity.h"
++                  "${HAPI_SOURCE_DIR}/../include/HAPI/HaptikfabrikenHapticsDevice.h"
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HaptikHapticsDevice.h"
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HaptionHapticsDevice.h"
+                   "${HAPI_SOURCE_DIR}/../include/HAPI/HLThread.h"
+@@ -94,6 +95,7 @@
+                "HapticTriangleSet.cpp"
+                "HapticTriangleTree.cpp"
+                "HapticViscosity.cpp"
++               "HaptikfabrikenHapticsDevice.cpp"
+                "HaptikHapticsDevice.cpp"
+                "HaptionHapticsDevice.cpp"
+                "HLThread.cpp"
+Index: include/HAPI/HAPI.cmake
+===================================================================
+--- include/HAPI/HAPI.cmake	(revision 1032)
++++ include/HAPI/HAPI.cmake	(working copy)
+@@ -55,6 +55,10 @@
+ #cmakedefine HAVE_DHDAPI
+ #cmakedefine HAVE_DRDAPI
+ 
++/// Undef if you do not have Haptikfabriken API(www.haptikfabriken.com) installed.
++/// Required for the haptics devices from Haptikfabriken and WoodenHaptics.
++#cmakedefine HAVE_HAPTIKFABRIKENAPI
++
+ /// Undef if you do not have Virtuose API(www.haption.com) installed.
+ /// Required for the Virtuose series haptics devices from  Haption.
+ #cmakedefine HAVE_VIRTUOSEAPI
+Index: include/HAPI/HaptikfabrikenHapticsDevice.h
+===================================================================
+--- include/HAPI/HaptikfabrikenHapticsDevice.h	(nonexistent)
++++ include/HAPI/HaptikfabrikenHapticsDevice.h	(working copy)
+@@ -0,0 +1,100 @@
++//////////////////////////////////////////////////////////////////////////////
++//    Copyright 2019, SenseGraphics AB
++//
++//    This file is part of HAPI.
++//
++//    HAPI is free software; you can redistribute it and/or modify
++//    it under the terms of the GNU General Public License as published by
++//    the Free Software Foundation; either version 2 of the License, or
++//    (at your option) any later version.
++//
++//    HAPI is distributed in the hope that it will be useful,
++//    but WITHOUT ANY WARRANTY; without even the implied warranty of
++//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++//    GNU General Public License for more details.
++//
++//    You should have received a copy of the GNU General Public License
++//    along with HAPI; if not, write to the Free Software
++//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++//
++//    A commercial license is also available. Please contact us at 
++//    www.sensegraphics.com for more information.
++//
++//
++/// \file HaptikfabrikenHapticsDevice.h
++/// \brief Header file for HaptikfabrikenHapticsDevice.
++///
++//
++//////////////////////////////////////////////////////////////////////////////
++
++#ifndef __HaptikfabrikenHapticsDevice_H__
++#define __HaptikfabrikenHapticsDevice_H__
++
++#include <HAPI/HAPIHapticsDevice.h>
++
++#ifdef HAVE_HAPTIKFABRIKENAPI
++#include <haptikfabrikenapi.h>
++
++
++namespace HAPI {
++ 
++  /// \ingroup HapticsDevices
++  /// \class HaptikfabrikenHapticsDevice
++  /// \brief Interface to the WoodenHaptics and Polhem devices through the open source library
++  /// haptikfabrikenApi. Works on linux.
++  class HAPI_API HaptikfabrikenHapticsDevice: public HAPIHapticsDevice {
++  public:
++
++    /// Constructor. device_index is the index of falcon device
++    /// connected.
++    HaptikfabrikenHapticsDevice( unsigned int device_index = 0 );
++
++    /// Destructor.
++    virtual ~HaptikfabrikenHapticsDevice();
++
++    /// Returns the index of the falcon device the instance of this class
++    /// refers to.
++    inline unsigned int getDeviceIndex() {
++      return index;
++    }
++
++    /// Register this renderer to the haptics renderer database.
++    static HapticsDeviceRegistration device_registration;
++
++  protected:
++    /// Implementation of updateDeviceValues using API to get the values.
++    virtual void updateDeviceValues( HAPIHapticsDevice::DeviceValues &dv,
++                                     HAPITime dt );
++
++    /// Implementation of sendOutput using API to send forces.
++    virtual void sendOutput( DeviceOutput &dv,
++                             HAPITime dt );
++
++    /// Initialize the haptics device. Use the HapticThread class in Threads.h
++    /// as the thread for haptic rendering.
++    /// \param _thread_frequency is the desired haptic frequency. 
++    /// 1000 is the maximum allowed frequency that can be specified. Setting
++    /// this parameter to -1 means run as fast as possible. It is recommended
++    /// to use the default value for most users.
++    virtual bool initHapticsDevice( int _thread_frequency = 1000 );
++
++    /// Releases all resources allocated in initHapticsDevice. 
++    virtual bool releaseHapticsDevice();
++
++    /// The index of the device that the instance of the class
++    /// refers to.
++    unsigned int index;
++
++
++
++    //------------------------------------------------------------------------------
++    // From HaptikfabrikenAPI
++    //------------------------------------------------------------------------------
++    std::auto_ptr <haptikfabriken::HaptikfabrikenInterface> hfab;
++    //------------------------------------------------------------------------------
++
++  };
++}
++
++#endif //__HAVE_HAPTIKFABRIKENAPI__
++#endif //__HaptikfabrikenHapticsDevice_H__
+Index: src/HaptikfabrikenHapticsDevice.cpp
+===================================================================
+--- src/HaptikfabrikenHapticsDevice.cpp	(nonexistent)
++++ src/HaptikfabrikenHapticsDevice.cpp	(working copy)
+@@ -0,0 +1,152 @@
++//////////////////////////////////////////////////////////////////////////////
++//    Copyright 2019, SenseGraphics AB
++//
++//    This file is part of HAPI.
++//
++//    HAPI is free software; you can redistribute it and/or modify
++//    it under the terms of the GNU General Public License as published by
++//    the Free Software Foundation; either version 2 of the License, or
++//    (at your option) any later version.
++//
++//    HAPI is distributed in the hope that it will be useful,
++//    but WITHOUT ANY WARRANTY; without even the implied warranty of
++//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++//    GNU General Public License for more details.
++//
++//    You should have received a copy of the GNU General Public License
++//    along with HAPI; if not, write to the Free Software
++//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++//
++//    A commercial license is also available. Please contact us at 
++//    www.sensegraphics.com for more information.
++//
++//
++/// \file HaptikfabrikenHapticsDevice.cpp
++/// \brief Cpp file for HaptikfabrikenHapticsDevice.
++///
++//////////////////////////////////////////////////////////////////////////////
++
++#include <HAPI/HaptikfabrikenHapticsDevice.h>
++#ifdef HAVE_HAPTIKFABRIKENAPI
++#include <sstream>
++
++using namespace HAPI;
++using namespace haptikfabriken;
++
++HAPIHapticsDevice::HapticsDeviceRegistration 
++HaptikfabrikenHapticsDevice::device_registration
++( "HaptikfabrikenHapticsDevice",
++  &(newInstance< HaptikfabrikenHapticsDevice >));
++
++/// Constructor. device_index is the index of falcon device
++/// connected. Should not be larger than getNrConnectedDevices() - 1.
++HaptikfabrikenHapticsDevice::HaptikfabrikenHapticsDevice( unsigned int device_index ):
++  index( device_index ),
++  hfab( 0 ) { // maybe new
++  
++  max_stiffness = 1500;
++
++  std::cout << "HaptikfabrikenHapticsDevice::HaptikfabrikenHapticsDevice()\n";
++}
++
++HaptikfabrikenHapticsDevice::~HaptikfabrikenHapticsDevice() {
++}
++
++bool HaptikfabrikenHapticsDevice::initHapticsDevice( int _thread_frequency ) {
++  hfab.reset(new HaptikfabrikenInterface()); // Default settings and kinematics model used
++  if(hfab->open()) {
++    std::stringstream s;
++    s << "Cannot open Haptikfabriken device (index " << index << ") - Error: "
++      << hfab->getErrorCode()
++      << ". Make sure you have the device connected properly "
++      << "and have the permissions to communicate over the USB "
++      << "port. " << std::endl;
++    setErrorMsg( s.str() );
++    return false;
++  }
++
++  return true;
++}
++
++bool HaptikfabrikenHapticsDevice::releaseHapticsDevice() {
++  HAPIHapticsDevice::disableDevice();
++  hfab->close();
++  hfab.reset(0);
++    
++  return true;
++}
++
++void HaptikfabrikenHapticsDevice::updateDeviceValues( DeviceValues &dv,
++                                                HAPITime dt ) {
++  HAPIHapticsDevice::updateDeviceValues( dv, dt );
++
++
++  fsVec3d p = hfab->getPos();
++
++
++  fsRot r = hfab->getRot();
++
++  Matrix3 ChaiToH3d(0,1,0,  // h3d x is chai y (second column)
++                    0,0,1,  // h3d y is chai z (third column)
++                    1,0,0); // h3d z is chai x (first column)
++  //Where is chai:  x y z
++
++  dv.position = ChaiToH3d * Vec3(p.x(),p.y(),p.z());
++  //std::cout << "Calculated position (H3D): " << dv.position.x << "," << dv.position.y << "," << dv.position.z << "\n";
++
++  Matrix3 chaiRot(r.m[0][0], r.m[0][1], r.m[0][2],
++                  r.m[1][0], r.m[1][1], r.m[1][2],
++                  r.m[2][0], r.m[2][1], r.m[2][2]);
++
++
++  // rotate about x 180
++  /*
++  Matrix3 rotx180(1,0,0,
++                  0,-1,0,
++                  0,0,-1);
++                  */
++
++  // rotate about x 90
++  Matrix3 rotx90(1,0,0,
++                  0,0,-1,
++                  0,1,0);
++
++  // rotate about x 90
++  Matrix3 roty90(0,0,1,
++                  0,1,0,
++                  -1,0,0);
++
++  // rotate about z 90
++  /*
++  Matrix3 rotz90(0,-1,0,
++                 1,0,0,
++                 0,0,1);
++  */
++
++
++  Matrix3 h3dRot = ChaiToH3d * chaiRot * rotx90 * roty90;
++
++
++  dv.orientation = Rotation(h3dRot);
++
++
++
++
++
++  calculateVelocity(dv, dt);
++  dv.button_status = 0; // bitmask to be filled
++}
++
++void HaptikfabrikenHapticsDevice::sendOutput( DeviceOutput &dv,
++                                        HAPITime dt ) {
++
++  Matrix3 H3DtoChai(0,0,1,
++                    1,0,0,
++                    0,1,0);
++  Vec3 f = H3DtoChai * dv.force;
++
++  hfab->setForce(fsVec3d(f.x, f.y, f.z));
++  //current_values.torque = dv.torque;
++}
++
++#endif

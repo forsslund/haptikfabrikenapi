@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<X3D profile='H3DAPI' version='1.3'>
+  <head>
+    <meta name='title' content='SuperShape.x3d'/>
+    <meta name='description' content='Demonstrates the SuperShape geometry.'/>
+    <meta name='editors' content='SenseGraphics AB, 2005-2014'/>
+  </head>
+  <Scene>
+<Viewpoint position="0.0 0.0 0.6" description="Default H3D Viewpoint"/>
+
+<DeviceInfo>
+  <HaptikfabrikenDevice followViewpoint="false" positionCalibration="
+   1.00000   0.00000   0.00000   0.00000
+   0.00000   0.50000  -0.86603   0.05000
+   0.00000   0.86603   0.50000   0.08660
+   0.00000   0.00000   0.00000   1.00000
+" DEF="device">
+	<GodObjectRenderer/>
+      <Group containerField="stylus">
+	  <Shape>
+	    <Appearance>
+	      <Material diffuseColor="0 1 0"/>
+	    </Appearance>
+	    <Sphere DEF="PROXY" radius="0.025"/>
+	  </Shape>
+<!--Transform rotation="1 0 0 3.1415"-->
+
+	  <Transform translation="0 0 0.08" rotation="1 0 0 1.570796" >
+	    <Shape>
+	      <Appearance>
+		<Material diffuseColor="1 0 0"/>
+	      </Appearance>
+	      <Cylinder radius="0.01" height="0.1"/>
+	    </Shape>
+	  </Transform>
+<Transform translation="0.05 0 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.1 0.01 0.01"/>
+	    </Shape>
+</Transform>
+<Transform translation="0 0.075 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.01 0.15 0.01"/>
+	    </Shape>
+</Transform>
+
+	</Group>
+  </HaptikfabrikenDevice>
+
+
+</DeviceInfo>
+
+	  <Shape>
+<Rectangle2D size="1 0.001"/>
+	  </Shape>
+	  <Shape>
+<Rectangle2D size="0.001 1"/>
+	  </Shape>
+
+<QTransform DEF="still">
+	  <Shape>
+	    <Appearance>
+	      <Material diffuseColor="0 1 0"/>
+	    </Appearance>
+	    <Sphere DEF="PROXY" radius="0.025"/>
+	  </Shape>
+<!--Transform rotation="1 0 0 3.1415"-->
+	  <Transform translation="0 0 0.08" rotation="1 0 0 1.570796" >
+	    <Shape>
+	      <Appearance>
+		<Material diffuseColor="1 0 0"/>
+	      </Appearance>
+	      <Cylinder radius="0.01" height="0.1"/>
+	    </Shape>
+	  </Transform>
+<Transform translation="0.05 0 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.1 0.01 0.01"/>
+	    </Shape>
+</Transform>
+<Transform translation="0 0.075 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.01 0.15 0.01"/>
+	    </Shape>
+</Transform>
+</QTransform>
+<!--/Transform-->
+
+<!--ROUTE fromNode="device" fromField="trackerPosition" toNode="still" toField="translation"/--> 
+
+
+<ForceField force="0 0 0"/>
+<Transform translation="0.05 0 0">
+
+    <FitToBoxTransform boxCenter="0 0 0" boxSize="0.03 0.03 0.03"
+    uniformScalingOnly="true" active="true">
+      <Shape>
+        <Appearance>
+          <Material DEF="MAT" diffuseColor="0.7 1 0.7"/>
+          <SmoothSurface />
+        </Appearance>
+        <SuperShape DEF="SS" resolution="128"
+                    ss1_m="6" ss1_a="1" ss1_b="1"
+                    ss1_n1="1" ss1_n2="1" ss1_n3="1"
+                    ss2_m="3" ss2_a="1" ss2_b="1"
+                    ss2_n1="1" ss2_n2="1" ss2_n3="1"  />
+      </Shape>
+    </FitToBoxTransform>
+</Transform>	
+
+<Transform translation="-0.3 0.22 0">
+          <Switch DEF="MATSWITCH">
+    <Shape>
+     <Box size="0.03 0.03 0.03"/>
+    <Appearance>
+ 	          <Material diffuseColor="0.7 1 0.7"/>
+    </Appearance>
+    </Shape>
+    <Shape>
+     <Box size="0.03 0.03 0.03"/>
+ 
+
+   <Appearance>
+ 	          <Material diffuseColor="1 0.2 0.2"/>
+    </Appearance>
+    </Shape>
+          </Switch>
+</Transform>
+
+
+    <ROUTE fromNode="device" fromField="buttons" toNode="MATSWITCH" toField="whichChoice"/> 
+    <PROGRAM_SETTING node="SS" field="ss1_m" name="ss1_m" section="SuperShape node parameters" />
+    <PROGRAM_SETTING node="SS" field="ss1_a" name="ss1_a" section="SuperShape node parameters" />
+    <PROGRAM_SETTING node="SS" field="ss1_b" name="ss1_b" section="SuperShape node parameters" />
+    <PROGRAM_SETTING node="SS" field="resolution" name="resolution" section="SuperShape node parameters" />
+    
+    <PROGRAM_SETTING node="MAT" field="diffuseColor" name="diffuseColor" section="SuperShape Material" />
+    <PROGRAM_SETTING node="MAT" field="emissiveColor" name="emissiveColor" section="SuperShape Material" />
+  </Scene>
+</X3D>

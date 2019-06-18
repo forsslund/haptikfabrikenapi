@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<X3D profile='H3DAPI' version='1.3'>
+  <head>
+    <meta name='title' content='SuperShape.x3d'/>
+    <meta name='description' content='Demonstrates the SuperShape geometry.'/>
+    <meta name='editors' content='SenseGraphics AB, 2005-2014'/>
+  </head>
+
+        <ImportLibrary library="&quot;forssim-0.3.1.dll&quot; &quot;libforssim-0.3.1.so&quot;"/>
+	  <ForssimInfo DEF="fsinfo"/>
+
+  <Scene>
+<PythonScript url="fps.py"/>
+      <Collision enabled="FALSE">
+  <Viewpoint orientation="1 0 0 0" fieldOfView="0.618" DEF="VP" position="0 0 0.5"/>
+    <!--Viewpoint orientation="1 0 0 -1.0472  " fieldOfView="0.643501108793" DEF="VP" position="0.0 0.48 0.48"/-->
+    <NavigationInfo nearVisibilityLimit="0.05" type="ANY" visibilityLimit="10" speed="0.01"/>
+    <StereoInfo focalDistance="0.5" interocularDistance="0.06" DEF="stereo"/>
+
+<!--Transform rotation="1 0 0 0.523599"																																																																																																																																																																																																																																						-->
+
+
+
+
+
+
+	  <Shape>
+	    <Appearance>
+	      <Material diffuseColor="0 1 0"/>
+	    </Appearance>
+	    <Sphere DEF="" radius="0.025"/>
+	  </Shape>
+
+<!--Transform rotation="1 0 0 3.1415"-->
+	  <Transform translation="0 0 0.08" rotation="1 0 0 1.570796" >
+	    <Shape>
+	      <Appearance>
+		<Material diffuseColor="1 0 0"/>
+	      </Appearance>
+	      <Cylinder radius="0.01" height="0.02"/>
+	    </Shape>
+	  </Transform>
+<Transform translation="0.05 0 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.1 0.01 0.01"/>
+	    </Shape>
+</Transform>
+<Transform translation="0 0.075 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.01 0.15 0.01"/>
+	    </Shape>
+</Transform>
+
+
+
+
+
+
+<DeviceInfo>
+  <HaptikfabrikenDevice desiredHapticsRate="5000" positionCalibration="
+  1.00000   0.00000   0.00000   0.00000
+   0.00000   0.50000  -0.86603   0.19143
+   0.00000   0.86603   0.50000  -0.18443
+   0.00000   0.00000   0.00000   1.00000"
+ DEF="device" followViewpoint="false" orientationCalibration="1 0 0 1.0472">
+  <!--HaptikfabrikenDevice positionCalibration="
+  1.00000   0.00000   0.00000  -0.18200
+   0.00000   0.50000  -0.86603   0.08307
+   0.00000   0.86603   0.50000  -0.11412
+   0.00000   0.00000   0.00000   1.00000" DEF="device" followViewpoint="false"-->
+  <!--HaptikfabrikenDevice positionCalibration="
+  1.00000   0.00000   0.00000  -0.18200
+   0.00000   1.0000  0.0   0.08307
+   0.00000   0.0    1.0000  -0.11412
+   0.00000   0.00000   0.00000   1.00000" DEF="device" followViewpoint="false"-->
+	<GodObjectRenderer/>
+      <Group containerField="stylus">
+	  <Shape>
+	    <Appearance>
+	      <Material diffuseColor="0 1 0"/>
+	    </Appearance>
+	    <Sphere DEF="PROXY" radius="0.002"/>
+	  </Shape>
+<!--Transform rotation="1 0 0 3.1415"-->
+
+	  <Transform translation="0 0 0.08" rotation="1 0 0 1.570796" >
+	    <Shape>
+	      <Appearance>
+		<Material diffuseColor="1 0 0"/>
+	      </Appearance>
+	      <Cylinder radius="0.005" height="0.1"/>
+	    </Shape>
+	  </Transform>
+<Transform translation="0.05 0 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.1 0.001 0.001"/>
+	    </Shape>
+</Transform>
+<Transform translation="0 0.075 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.001 0.15 0.001"/>
+	    </Shape>
+</Transform>
+
+	</Group>
+  </HaptikfabrikenDevice>
+
+
+</DeviceInfo>
+
+<MatrixTransform DEF="KobraCoordinates">
+<!--Transform rotation="1 0 0 1.0472	">
+<Transform translation="0 -0.080 -0.25443"-->
+
+<!-- Haptic device position and physical base and workspace -->
+<!-- Calibration means we ADD the translation values to the position reported from device -->
+<Transform translation="-0.182 0.0217 0.137" scale="1 1 1">
+	<!-- Draw base, where the dome is a sphere located 8 mm under kinematic origin -->
+	<Transform translation="0 -0.008 0">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9"/>
+		    </Appearance>
+			<Sphere radius="0.083"/>
+		  </Shape>
+	</Transform>
+
+	<!-- Draw workspace -->
+        <Transform  rotation="0 1 0 0.785398">
+	<Transform translation="0 0.0325 0.2045">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9" transparency="0.7"/>
+		    </Appearance>
+			<Sphere radius="0.0075"/>
+		  </Shape>
+	</Transform></Transform>
+
+
+	<!-- Draw workspace -->
+        <Transform  rotation="0 1 0 0">
+	<Transform translation="0 0.0325 0.2045">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9" transparency="0.7"/>
+		    </Appearance>
+			<Sphere radius="0.0075"/>
+		  </Shape>
+	</Transform></Transform>
+	<!-- Draw workspace -->
+        <Transform  rotation="0 1 0 1.178097">
+	<Transform translation="0 0.0325 0.2045">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9" transparency="0.7"/>
+		    </Appearance>
+			<Sphere radius="0.0075"/>
+		  </Shape>
+	</Transform></Transform>
+
+	<!-- Draw workspace -->
+        <Transform  rotation="0 1 0 0.392699">
+	<Transform translation="0 0.0325 0.2045">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9" transparency="0.7"/>
+		    </Appearance>
+			<Sphere radius="0.0075"/>
+		  </Shape>
+	</Transform></Transform>
+
+	<!-- Draw workspace -->
+        <Transform  rotation="0 1 0 1.5707">
+	<Transform translation="0 0.0325 0.2045">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.9 0.9 0.9" transparency="0.7"/>
+		    </Appearance>
+			<Sphere radius="0.0075"/>
+		  </Shape>
+	</Transform></Transform>
+
+
+
+
+
+
+
+
+
+</Transform>
+
+<!--ROUTE fromNode="DEV_CALIB" toNode="device" toField="positionCalibration" fromField="matrix"/>
+<ROUTE fromNode="DEV_CALIB" toNode="device" toField="orientationCalibration" fromField="rotation"/-->
+
+
+<!-- Draw table -->
+<Transform translation="0 0 0">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.6 0.6 0.6" transparency="0.5"/>
+		    </Appearance>
+			<Box size="0.610 0.01 0.440"/>
+		  </Shape>
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.8 0 0"/>
+		    </Appearance>
+			<Sphere radius="0.01"/>
+		  </Shape>
+</Transform>
+
+
+<!-- Draw cardboard box -->
+<Transform translation="0.044 0.0525 0.169">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.0 0.6 0.6" transparency="0"/>
+<SmoothSurface stiffness="0.9" damping="0.0" />
+
+		    </Appearance>
+			<Box size="0.228 0.105 0.338"/>
+		  </Shape>
+ </Transform>
+
+
+
+
+<!-- Image plane -->
+<!--Transform translation="0 0 0.4" rotation="1 0 0 0.523598">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0 0.6 0" transparency="0.5"/>
+		    </Appearance>
+			<Box size="0.51 0.0001 0.6"/>
+		  </Shape>
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0 0.8 0"/>
+		    </Appearance>
+			<Sphere radius="0.005"/>
+		  </Shape>
+
+</Transform-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	  <Shape>
+	    <Appearance>
+	      <Material diffuseColor="0 1 0"/>
+	    </Appearance>
+	    <Sphere DEF="" radius="0.025"/>
+	  </Shape>
+
+<!--Transform rotation="1 0 0 3.1415"-->
+	  <Transform translation="0 0 0.08" rotation="1 0 0 1.570796" >
+	    <Shape>
+	      <Appearance>
+		<Material diffuseColor="1 0 0"/>
+	      </Appearance>
+	      <Cylinder radius="0.01" height="0.1"/>
+	    </Shape>
+	  </Transform>
+<Transform translation="0.05 0 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.1 0.01 0.01"/>
+	    </Shape>
+</Transform>
+<Transform translation="0 0.075 0">
+	    <Shape>
+	      <Appearance>
+		<Material/>
+	      </Appearance>
+	      <Box size="0.01 0.15 0.01"/>
+	    </Shape>
+</Transform>
+
+
+
+
+<ForceField force="0 0 0"/>
+
+
+<Transform DEF="kobraCoordinates">
+<ForceField force="0 0 0"/>
+</Transform>
+
+
+<Transform translation="-0.3 0.22 0">
+          <Switch DEF="MATSWITCH">
+    <Shape>
+     <Box size="0.03 0.03 0.03"/>
+    <Appearance>
+ 	          <Material diffuseColor="0.7 1 0.7"/>
+    </Appearance>
+    </Shape>
+    <Shape>
+     <Box size="0.03 0.03 0.03"/>
+ 
+
+   <Appearance>
+ 	          <Material diffuseColor="1 0.2 0.2"/>
+    </Appearance>
+    </Shape>
+          </Switch>
+
+</Transform>
+
+
+    <ROUTE fromNode="device" fromField="buttons" toNode="MATSWITCH" toField="whichChoice"/> 
+
+
+  <Webserv DEF="webserv" gpvec3f1="0 0 0.45" gpfloat1="0.618" gpfloat2="0.06" gpfloat3="0.45"/>
+  <ROUTE fromNode="webserv" fromField="gpvec3f1" toNode="VP" toField="position"/>
+  <ROUTE fromNode="webserv" fromField="gpfloat1" toNode="VP" toField="fieldOfView"/>
+  <ROUTE fromNode="webserv" fromField="gpfloat2" toNode="stereo" toField="interocularDistance"/>
+  <ROUTE fromNode="webserv" fromField="gpfloat3" toNode="stereo" toField="focalDistance"/>
+
+</MatrixTransform>
+<ROUTE fromNode="device" fromField="positionCalibration" toNode="KobraCoordinates" toField="matrix"/>
+</Collision>
+
+
+  </Scene>
+
+
+
+
+</X3D>
