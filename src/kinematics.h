@@ -4,4 +4,3 @@
 #include "haptikfabrikenapi.h"
 
 #endif // KINEMATICS_H
-#endif

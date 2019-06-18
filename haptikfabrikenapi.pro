@@ -4,7 +4,7 @@
 # For Windows library it is recommended do build statically and linking your application
 # with boost and sensoray.
 #
-# For testing/experimentation uncomment (remove #) these lines...
+# For testing/experimentation uncomment (remove #) these lines (and run qmake)...
 #TEMPLATE = app
 #SOURCES += src/main.cpp
 
@@ -13,7 +13,6 @@ TEMPLATE = lib
 CONFIG += dynamiclib
 
 # For Windows we recommend static build for now:
-#TEMPLATE = lib
 #CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
@@ -87,8 +86,8 @@ use_sensoray {
     DEFINES += USE_DAQ
 
     unix: LIBS += -l826_64
-    INCLUDEPATH += $$PWD/external/sensoray
-    DEPENDPATH += $$PWD/external/sensoray
+    unix: INCLUDEPATH += $$PWD/external/sensoray
+    unix: DEPENDPATH += $$PWD/external/sensoray
 #    unix:!macx: PRE_TARGETDEPS += $$PWD/external/sensoray/sdk_826_linux_3.3.11/middleware/lib826_64.a
 }
 
@@ -129,6 +128,5 @@ unix {
 
 
 win32: LIBS += -L$$PWD/external/sensoray/s826_3.3.9/api/x64/ -ls826
-
-INCLUDEPATH += $$PWD/external/sensoray/s826_3.3.9/api
-DEPENDPATH += $$PWD/external/sensoray/s826_3.3.9/api
+#win32: INCLUDEPATH += $$PWD/external/sensoray/s826_3.3.9/api
+#win32: DEPENDPATH += $$PWD/external/sensoray/s826_3.3.9/api
