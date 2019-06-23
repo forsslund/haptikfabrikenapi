@@ -9,10 +9,16 @@
 <Viewpoint position="0.0 0.0 0.6" description="Default H3D Viewpoint"/>
 
 <DeviceInfo>
-  <HaptikfabrikenDevice followViewpoint="false" positionCalibration="
+  <!--HaptikfabrikenDevice followViewpoint="false" positionCalibration="
    1.00000   0.00000   0.00000   0.00000
    0.00000   0.50000  -0.86603   0.05000
    0.00000   0.86603   0.50000   0.08660
+   0.00000   0.00000   0.00000   1.00000
+" DEF="device"-->
+  <HaptikfabrikenDevice followViewpoint="false" positionCalibration="
+   1.00000   0.00000   0.00000   0.15000
+   0.00000   1.00000   0.0       -0.0500
+   0.00000   0.0       1.00000   -0.3000
    0.00000   0.00000   0.00000   1.00000
 " DEF="device">
 	<GodObjectRenderer/>
@@ -62,6 +68,20 @@
 	  <Shape>
 <Rectangle2D size="0.001 1"/>
 	  </Shape>
+
+
+<!-- Draw cardboard box -->
+<Transform translation="0 0 0">
+		  <Shape>
+		    <Appearance>
+		      <Material diffuseColor="0.0 0.6 0.6" transparency="0"/>
+<SmoothSurface stiffness="0.9" damping="0.0" />
+
+		    </Appearance>
+			<Box size="0.15 0.15 0.2"/>
+		  </Shape>
+ </Transform>
+
 
 <QTransform DEF="still">
 	  <Shape>
