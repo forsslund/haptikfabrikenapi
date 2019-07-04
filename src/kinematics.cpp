@@ -12,7 +12,7 @@ constexpr double pi_d{3.14159265358979323846264338327950288419716939937510582097
 
 
 #ifdef SUPPORT_POLHEMV2
-#include "../haptikfabrikenapi-polhem/polhem.h"
+#include "polhem.h"
 #endif
 
 
@@ -362,13 +362,13 @@ fsVec3d Kinematics::computePosition(const int *encoderValues)
     double x,y,z;
 
     if(m_config.variant == 3){ // Polhem ver. 2
+        long double r[3] = {0,0,0};
 #ifdef SUPPORT_POLHEMV2
-        long double r[3];
         polhemKinematics(tA,tB,tC,r);
+#endif
         x = (std::isnan(r[0])?0:r[0]) - m_config.workspace_origin_x;
         y = (std::isnan(r[1])?0:r[1]) - m_config.workspace_origin_y;
         z = (std::isnan(r[2])?0:r[2]) - m_config.workspace_origin_z;
-#endif
     } else { // All other devices have straight forward kinematics
         x = cos(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_x;
         y = sin(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_y;
@@ -466,7 +466,6 @@ fsRot Kinematics::computeRotation(const int* encBase, const int* encRot)
     pose p  = calculate_pose(m_config, encBase);
 
     const double& tA = p.tA;
-    const double& tB = p.tB;
     const double& tC = p.tC;
     double dir[] = { m_config.enc_and_body_aligned_d?1.0:-1.0,
                      m_config.enc_and_body_aligned_e?1.0:-1.0,
@@ -487,6 +486,7 @@ fsRot Kinematics::computeRotation(const int* encBase, const int* encRot)
     fsRot rC;
     if(m_config.variant == 3){ // Polhem v.2
 #ifdef SUPPORT_POLHEMV2
+        const double& tB = p.tB;
         double lambda = polhemComputeLambda(tB, tC);
         rC.rot_y(-lambda);
 #endif

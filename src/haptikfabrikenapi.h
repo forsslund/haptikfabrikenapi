@@ -41,6 +41,14 @@ struct fsRot {
             for(int j=0;j<3;++j)
                 this->m[i][j] = m[i][j];
     }
+    fsRot(std::initializer_list<double> list){   // To initalize with list e.g.
+        auto iter = list.begin();                //    fsRot r{1,2,3,
+        for(int i=0;i<3;++i)                     //            4,5,6,
+            for(int j=0;j<3;++j){                //            7,8,9};
+                m[i][j]=*iter;
+                iter++;
+            }
+    }
     void identity();
     void rot_x(double t);
     void rot_y(double t);

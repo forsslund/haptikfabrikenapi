@@ -72,12 +72,15 @@ void FsDAQHapticDeviceThread::thread()
     speedcheck_enc[0]=signedenc(0);
     speedcheck_enc[1]=signedenc(1);
     speedcheck_enc[2]=signedenc(2);
+
+#ifndef DISABLE_SAFEMODE_CHECK
     std::chrono::time_point<std::chrono::system_clock> speedcheck_time = std::chrono::system_clock::now();
     constexpr int speedcheck_timeout_ms = 40;
     constexpr int speedcheck_minimum_hz = 4000;
     constexpr int speedcheck_mincount = speedcheck_timeout_ms * (speedcheck_minimum_hz / 1000);
     int speedcheck_loop_counts = 0;
     bool speedcheck_running = true;
+#endif
 
     while(running){
 
@@ -436,7 +439,7 @@ int FsDAQHapticDeviceThread::open()
 
 
     std::cout << "\n************************************\n";
-    std::cout <<   "*  Welcome to HaptikfabrikenFsDAQ      *\n";
+    std::cout <<   "*  Welcome to HaptikfabrikenFsDAQ  *\n";
     std::cout <<   "*  Build: " << __DATE__ << " " __TIME__ << "     *\n";
     std::cout <<   "************************************\n\n";
 

@@ -15,6 +15,8 @@ win32: LIBS += -L$$PWD/../../../../build-haptikfabrikenapi-Desktop_Qt_5_9_1_MSVC
 INCLUDEPATH += $$PWD/../../../src
 DEPENDPATH += $$PWD/../../../src
 
+unix: DEFINES += LINUX
+
 
 # Apparently needed...
 unix: LIBS += -lboost_system

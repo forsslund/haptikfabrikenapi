@@ -1,22 +1,15 @@
 #include <iostream>
+#include <sstream>
+#include <thread>
 #include "haptikfabrikenapi.h"
-#include "webserv.h"
 
 using namespace std;
 using namespace haptikfabriken;
 
-#define RENDER_BOX
+//#define RENDER_BOX
 #define LOOP
 
-/*
-int main()
-{
-    cout << "Hello World!" << endl;
-
-
-}*/
 #ifdef LINUX
-
 // ******************** FOR LINUX KEYBOARD LOOP BREAK ***********
 #include <stdio.h>
 #include <sys/select.h>
@@ -49,20 +42,7 @@ int _kbhit() {
 
 int main()
 {
-    cout << "Hello World!" << endl;
-
-
-    double a[3][3] = {{1,2,3},
-                      {4,5,6},
-                      {7,8,9}};
-    fsMatrix3 m(a);
-    fsVec3d v;
-    v.m_x = 2;
-    v.m_y = 3;
-    v.m_z = 4;
-    std::cout << "Solution: " << toString(m*v) << " Transpose: " << toString(m.transpose());
-
-
+    cout << "Welcome to Haptikfabriken API!\nPress any key to close." << endl;
 
     // Select model
     //Kinematics::configuration c = Kinematics::configuration::polhem_v2();
@@ -76,8 +56,8 @@ int main()
     bool wait_for_next_message = false;
 
     // Create haptics communication thread.
-
-    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
+    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::DAQ);
+    //HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
 
     // Optionally set max millimaps according to your escons (default 2000). Might need to set in firmware too.
     hfab.max_milliamps = 4000;
@@ -86,52 +66,53 @@ int main()
     hfab.open();
 
     // Verbose or not (set to at least 1 to show debug messages)
-    int verbose=4;
+    int verbose=0;
 
-    // NOT NEEDED; IS INCLUDED NOWADAYS
-    //Webserv w;
-    //w.initialize(8089);
-
-    //hfab.open();
-
-
-     double fz=0;
     // Main loop doing some haptic rendering
-    bool active_phase=true;
-    while(active_phase){
+    bool running=true;
+
+    while(running){
         if(_kbhit()) {
             char cc;
             std::cin >> cc;
-            fz += 0.1;
-            //active_phase=false;
+            running=false;
         }
 
-        fsVec3d pos = hfab.getPos();
-        int enc[6];
-        hfab.getEnc(enc);
-        int ma[3];
-        hfab.getLatestCommandedMilliamps(ma);
-        stringstream ss;
+        // Get position and orientation of manipulandum
+        fsVec3d pos = hfab.getPos();        
+        fsRot orientation = hfab.getRot();
 
-        // Uncomment this line to improve speed. Just for info.
-        if(verbose){
-            ss << "\"DeviceName\": \"" << hfab.kinematicModel.name << "\",\n";
-            ss << "\"Encoders\": [" << enc[0] << ", " << enc[1] << ", " << enc[2] << ", " << enc[3]
-               <<", " << enc[4] << ", " << enc[5] << "],\n";
-            ss << "\"CommandedMilliamps\": [" << ma[0] << ", " << ma[1] << ", " << ma[2] << "],\n";
 
-            if(verbose>=3){
-              ss << "\"Position\": [" << toString(pos) << "],\n";
-              ss << "\"Orientation\": [\n" << toString(hfab.getRot()) << "],\n";
-              ss << "\"BodyAngles\": [" << toString(hfab.getBodyAngles()) << "],\n";
-              ss << "\"Configuration\": " << toJSON(c) << ",\n";
-            }
-        }
+        // Position is in Chai3D convention
+        //double x = pos.x();  // Increasing positive towards user
+        //double y = pos.y();  // Increasing positive to the user's right
+        //double z = pos.z();  // Increasing positive upwards
 
-        // Haptic rendering of a surrounding box
+
+        // Sometimes you want to use another convention, like H3D,
+        // where x is to the right, y is upwards and z is towards user.
+        // If so you can use this transform:
+        /*
+        fsRot chaiToH3d{0,1,0,  // h3d x is chai y (second column)
+                        0,0,1,  // h3d y is chai z (third column)
+                        1,0,0}; // h3d z is chai x (first column)
+        fsRot rotx90{1,0,0,
+                     0,0,-1,
+                     0,1,0};
+        fsRot roty90{0,0,1,
+                     0,1,0,
+                    -1,0,0};
+        fsVec3d h3dPos = chaiToH3d * pos;
+        fsRot h3dRot = chaiToH3d * orientation * rotx90 * roty90;
+        */
+
+
+
+        // Compute a force
         fsVec3d f = fsVec3d(0,0,0);
-//#define RENDER_BOX
-#ifdef RENDER_BOXQ
+
+        // For example haptic rendering of a surrounding box
+#ifdef RENDER_BOX
         fsVec3d boxpos = fsVec3d(0.200,0.0,0.033);
         double k=200;
         double b=0.03;
@@ -148,7 +129,7 @@ int main()
         if(z >  b) fz = -k*(z-b);
         if(z < -b) fz = -k*(z+b);
 
-        /*
+/*
         if(fx>3) fx=0;
         if(fx<-3) fx=0;
         if(fy>3) fy=0;
@@ -156,60 +137,49 @@ int main()
         if(fz>3) fz=0;
         if(fz<-3) fz=0;
 */
-#endif
-        double fx,fy;
-
-        fx=0;
-
-        fy=0;//pos.y()>-0.074? -300*(pos.y()+0.074) : 0;
-        //fz=0;
-
-        fz=1.4;
-
-
         f = fsVec3d(fx,fy,fz);
+#endif
 
-        if(verbose){
-            ss << "\"CommandedForce\":   [" << f.x() << ", " << f.y() << ", " << f.z() << "]\n";
-            //ss << std::string(24-9,'\n');
-            //w.setMessage(ss.str());
-            //this_thread::sleep_for(std::chrono::microseconds(10));
-        }
-        if(verbose>3) std::cout << ss.str();
+
 
         // Set force
-#ifdef POSITION_CONTROL
-
-
-
-        fsVec3d amps = fsVec3d(2,0,0);
-        fs.setCurrent(amps);
-#else
         hfab.setForce(f);
-#endif
 
-        //fsVec3d t = hfab.getBodyAngles();
-        //std::cout << t.m_x << "    ";
+        // Or, set current to the motors directly, in amps
+        //fsVec3d amps = fsVec3d(0.1,0,0);
+        //fs.setCurrent(amps);
 
-        //double a = t.m_x > 0? -t.m_x * 5.0 : 0;
+        // If you want you have access to the core values, e.g. encoders
+        int enc[6];
+        hfab.getEnc(enc);
+        int ma[3];
+        hfab.getLatestCommandedMilliamps(ma);
 
-        //std::cout << a << std::endl;
+        stringstream ss;
+        // Uncomment this line to improve speed. Just for info.
+        if(verbose){
+            ss << "\"DeviceName\": \"" << hfab.kinematicModel.name << "\",\n";
+            ss << "\"Encoders\": [" << enc[0] << ", " << enc[1] << ", " << enc[2] << ", " << enc[3]
+               <<", " << enc[4] << ", " << enc[5] << "],\n";
+            ss << "\"CommandedMilliamps\": [" << ma[0] << ", " << ma[1] << ", " << ma[2] << "],\n";
+            ss << "\"Position\": [" << toString(pos) << "],\n";
+            ss << "\"Orientation\": [\n" << toString(orientation) << "],\n";
+            ss << "\"BodyAngles\": [" << toString(hfab.getBodyAngles()) << "],\n";
+            //ss << "\"Configuration\": " << toJSON(c) << ",\n";
+            ss << "\"CommandedForce\":   [" << f.x() << ", " << f.y() << ", " << f.z() << "]\n";
 
-        //fsVec3d amps = fsVec3d(a,0.0,0.0);
-        //hfab.setCurrent(amps);
+            std::cout << ss.str();
+        }
 
-
+        // Sleep e.g. 1ms = 1000us
+        this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 
 
-    //fsVec3d amps = fsVec3d(0.0,0.0,0.0);
-    //hfab.setCurrent(amps);
     hfab.close();
 
     char cc;
     std::cin >> cc;
-
-
 
 
     return 0;
