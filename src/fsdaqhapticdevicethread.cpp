@@ -118,9 +118,9 @@ void FsDAQHapticDeviceThread::thread()
         std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
         auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - speedcheck_time);
         if(milliseconds.count() > speedcheck_timeout_ms && speedcheck_running){
-            if( (std::abs(speedcheck_enc[0] - ch_a) < kinematics.m_config.cpr_encoder_a/4.0) &&
-                (std::abs(speedcheck_enc[1] - ch_b) < kinematics.m_config.cpr_encoder_b/4.0) &&
-                (std::abs(speedcheck_enc[2] - ch_c) < kinematics.m_config.cpr_encoder_c/4.0) &&
+            if( (std::abs(speedcheck_enc[0] - ch_a) < kinematics.m_config.cpr_encoder_a/2.0) &&
+                (std::abs(speedcheck_enc[1] - ch_b) < kinematics.m_config.cpr_encoder_b/2.0) &&
+                (std::abs(speedcheck_enc[2] - ch_c) < kinematics.m_config.cpr_encoder_c/2.0) &&
                 speedcheck_loop_counts > speedcheck_mincount &&
                 calibration_performed()){
                 S826_WatchdogKick(0,0x5A55AA5A); // Kick the watchdog
@@ -132,9 +132,9 @@ void FsDAQHapticDeviceThread::thread()
 
             } else {
                 std::cout << "Speed or loopcount "<< speedcheck_loop_counts << " (" << speedcheck_loop_counts*1000/milliseconds.count()<<") hz error! Watchdog not kicked!\n";
-                std::cout << std::abs(speedcheck_enc[0] - ch_a) << " compared with " << kinematics.m_config.cpr_encoder_a/4.0 << "\n";
-                std::cout << std::abs(speedcheck_enc[1] - ch_b) << " compared with " << kinematics.m_config.cpr_encoder_b/4.0 << "\n";
-                std::cout << std::abs(speedcheck_enc[2] - ch_c) << " compared with " << kinematics.m_config.cpr_encoder_c/4.0 << "\n";
+                std::cout << std::abs(speedcheck_enc[0] - ch_a) << " compared with " << kinematics.m_config.cpr_encoder_a/2.0 << "\n";
+                std::cout << std::abs(speedcheck_enc[1] - ch_b) << " compared with " << kinematics.m_config.cpr_encoder_b/2.0 << "\n";
+                std::cout << std::abs(speedcheck_enc[2] - ch_c) << " compared with " << kinematics.m_config.cpr_encoder_c/2.0 << "\n";
                 speedcheck_running = false;
 
                 S826_SafeWrenWrite(0,S826_SAFEN_SWE);  // Write-enable saefmode data registers
@@ -288,10 +288,10 @@ void FsDAQHapticDeviceThread::ixthread(int ixchan)
         uint ctstamp;
         uint reason;
         uint counter;
-
         uint a = S826_CounterSnapshotRead(0,ixchan,&counter,&ctstamp,&reason,S826_WAIT_INFINITE);
         if(a != S826_ERR_NOTREADY){ // if not nothing in buffer
             if(reason==8 || reason==16){
+//                std::cout << ixchan << " button " << reason << std::endl;
                 mtx_pos.lock();
                 int switchIndex=ixchan;
 
@@ -439,14 +439,12 @@ int FsDAQHapticDeviceThread::open()
 
 
     std::cout << "\n************************************\n";
-    std::cout <<   "*  Welcome to HaptikfabrikenFsDAQ  *\n";
+    std::cout <<   "*  Welcome to HaptikfabrikenFsDAQ! *\n";
     std::cout <<   "*  Build: " << __DATE__ << " " __TIME__ << "     *\n";
     std::cout <<   "************************************\n\n";
 
     std::cout << "Opened DAQ Connection: " << status << std::endl;
     std::cout << "Calibration performed:" << calibration_performed() << "\n";
-    std::cout << "Using kinematic model: " << kinematics.m_config.name
-              << toJSON(kinematics.m_config);
 
     if(kinematics.m_config.variant == 3)
         enable_calibration_button_ix0 = true;
@@ -456,10 +454,16 @@ int FsDAQHapticDeviceThread::open()
 
 
     // Enable buttons
+    running = true; // ixthreads uses the same variable but it normally is
+                    // not set until open() in the end.
     int numButtons = kinematics.m_config.variant==3 ? 5 : 0;
     for(int ix=0;ix<numButtons;ix++){
         m_ixthread[ix] = new boost::thread(boost::bind(&FsDAQHapticDeviceThread::ixthread, this, ix));
     }
+
+    std::cout << "Responding to maximum " << numButtons << " switches. Using ix0 for calibration: " << (enable_calibration_button_ix0?"true" : "false") << "\n";
+    std::cout << "Using kinematic model: " << kinematics.m_config.name
+              << toJSON(kinematics.m_config);
 
     // Start normal thread
     FsHapticDeviceThread::open();
