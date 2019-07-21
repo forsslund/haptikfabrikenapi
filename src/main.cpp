@@ -59,7 +59,7 @@ int main()
 
 
     HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::woodenhaptics_v2015(),
+                               Kinematics::configuration::polhem_v2(),
                                HaptikfabrikenInterface::DAQ);
     hi.open();
 

@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += main.cpp
 
 
-unix:!macx: LIBS += -L$$PWD/../../../ -lhaptikfabrikenapi
+unix:!macx: LIBS += -lhaptikfabrikenapi
 win32: LIBS += -L$$PWD/../../../../build-haptikfabrikenapi-Desktop_Qt_5_9_1_MSVC2015_64bit-Release/release -lhaptikfabrikenapi
 
 

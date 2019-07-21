@@ -22,7 +22,7 @@ CONFIG += dynamiclib
 # dumpbin -headers haptikfabrikenapi.lib
 
 # This disables safemode check, which may be needed using WoodenHaptics
-DEFINES += DISABLE_SAFEMODE_CHECK
+#DEFINES += DISABLE_SAFEMODE_CHECK
 
 
 # Rest of configuration comes here
@@ -45,7 +45,7 @@ INSTALLS += header_files
 CONFIG += use_usb_hid
 CONFIG += use_webserv
 CONFIG += use_sensoray
-#CONFIG += polhemv2
+CONFIG += polhemv2
 
 polhemv2 {
     #HEADERS += ../haptikfabrikenapi-polhem/polhem.h

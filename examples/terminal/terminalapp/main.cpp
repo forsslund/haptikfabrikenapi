@@ -45,9 +45,9 @@ int main()
     cout << "Welcome to Haptikfabriken API!\nPress any key to close." << endl;
 
     // Select model
-    //Kinematics::configuration c = Kinematics::configuration::polhem_v2();
+    Kinematics::configuration c = Kinematics::configuration::polhem_v2();
     //Kinematics::configuration c = Kinematics::configuration::polhem_v1();
-    Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2015();
+    //Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2015();
     //Kinematics::configuration c = Kinematics::configuration::aluhaptics_v2();
     //Kinematics::configuration c = Kinematics::configuration::vintage();
 
@@ -66,7 +66,7 @@ int main()
     hfab.open();
 
     // Verbose or not (set to at least 1 to show debug messages)
-    int verbose=0;
+    int verbose=1;
 
     // Main loop doing some haptic rendering
     bool running=true;
