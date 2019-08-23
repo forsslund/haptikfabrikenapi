@@ -12,7 +12,7 @@ constexpr double pi_d{3.14159265358979323846264338327950288419716939937510582097
 
 
 #ifdef SUPPORT_POLHEMV2
-#include "../haptikfabrikenapi-polhem/polhem.h"
+#include "../../fs_polhem/haptikfabrikenapi-polhem/polhem.h"
 #endif
 
 

@@ -5,15 +5,15 @@
 # with boost and sensoray.
 #
 # For testing/experimentation uncomment (remove #) these lines (and run qmake)...
-TEMPLATE = app
-SOURCES += src/main.cpp
+#TEMPLATE = app
+#SOURCES += src/main.cpp
 
 # ...and comment these lines out:
 #TEMPLATE = lib
 #CONFIG += dynamiclib
 
 # For Windows we recommend static build for now:
-#CONFIG += staticlib
+CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -45,10 +45,10 @@ INSTALLS += header_files
 CONFIG += use_usb_hid
 CONFIG += use_webserv
 CONFIG += use_sensoray
-#CONFIG += polhemv2
+CONFIG += polhemv2
 
 polhemv2 {
-    HEADERS += ../haptikfabrikenapi-polhem/polhem.h
+    HEADERS += ../fs_polhem/haptikfabrikenapi-polhem/polhem.h
     DEFINES += SUPPORT_POLHEMV2
 }
 
