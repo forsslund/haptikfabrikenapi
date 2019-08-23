@@ -41,6 +41,14 @@ struct fsRot {
             for(int j=0;j<3;++j)
                 this->m[i][j] = m[i][j];
     }
+    fsRot(std::initializer_list<double> list){   // To initalize with list e.g.
+        auto iter = list.begin();                //    fsRot r{1,2,3,
+        for(int i=0;i<3;++i)                     //            4,5,6,
+            for(int j=0;j<3;++j){                //            7,8,9};
+                m[i][j]=*iter;
+                iter++;
+            }
+    }
     void identity();
     void rot_x(double t);
     void rot_y(double t);
@@ -312,14 +320,15 @@ public:
 
 
         static configuration polhem_v2() {
-            double data[] = { 3, 0.0288, 0.0077, 0.010,
+            double data[] = { 3, 0.0288, 0.0130, 0.010, // 3, 0.0288,0.0077,0.010 originally
                               0.1, 0.165, 0.1308,
                               0.175, 0.100, 0.100,
-                              -0.137, 0.182, -0.0217, 0.150,
+//                              -0.137, 0.182, -0.0217, 0.150,
+                              0.137, 0, 0, 0.150,
                               0.321, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,1024,
-                              5.0, 2000.0, 1.0,
+                              5.0, 5000.0, 1.0,
                               0.0, 0.0, 0.0, 0.0, 0,
-                              -8327,-18447,27140,0,30,0,
+                              8327,-10926,27140,0,30,0, // second was -18477
                               0,1,0,0,0,0};
             return Kinematics::configuration(data,"polhem_v2 hardcoded");
         }

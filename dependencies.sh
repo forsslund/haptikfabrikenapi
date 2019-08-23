@@ -14,5 +14,6 @@ sudo make install
 modprobe s826
 make lib
 sudo make lib_install
+cd ../../../
 
 

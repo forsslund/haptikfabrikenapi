@@ -9,8 +9,8 @@
 #SOURCES += src/main.cpp
 
 # ...and comment these lines out:
-#TEMPLATE = lib
-#CONFIG += dynamiclib
+TEMPLATE = lib
+CONFIG += dynamiclib
 
 # For Windows we recommend static build for now:
 CONFIG += staticlib
@@ -22,7 +22,7 @@ CONFIG += staticlib
 # dumpbin -headers haptikfabrikenapi.lib
 
 # This disables safemode check, which may be needed using WoodenHaptics
-DEFINES += DISABLE_SAFEMODE_CHECK
+#DEFINES += DISABLE_SAFEMODE_CHECK
 
 
 # Rest of configuration comes here
@@ -49,6 +49,7 @@ CONFIG += polhemv2
 
 polhemv2 {
     HEADERS += ../fs_polhem/haptikfabrikenapi-polhem/polhem.h
+    #HEADERS += polhem.h
     DEFINES += SUPPORT_POLHEMV2
 }
 
