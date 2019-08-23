@@ -21,6 +21,7 @@ using namespace boost::property_tree;
 
 /// Add this node to the H3DNodeDatabase system.
 Webserv::Webserv(){
+    enc5=0;
     cout << "Webserv Constructing"<<endl;
 }
 
@@ -62,6 +63,14 @@ void Webserv::jonas_reply(HttpServer::Response& response,
 
   }*/
 
+  // Get encoder
+  //enc5 = 0;
+  if(path.find("/setencoder/5/") != string::npos){
+    string s = path.substr(14,string::npos);
+    message_mutex.lock();
+    enc5 = atoi(s.c_str());
+    message_mutex.unlock();
+  }
 
   message_mutex.lock();
   string latest_message = message;
@@ -143,6 +152,15 @@ void Webserv::setMessage(string s)
     message_mutex.lock();
     message = s;
     message_mutex.unlock();
+}
+
+int Webserv::getEnc5()
+{
+    int r;
+    message_mutex.lock();
+    r = enc5;
+    message_mutex.unlock();
+    return r;
 }
 
 void Webserv::initialize(int port)

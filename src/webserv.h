@@ -29,11 +29,13 @@ public:
 
 
     void setMessage(string s);
+    int getEnc5();
 
 private:
     thread webservThread;
     HttpServer* server;
     void start() { server->start(); }
+    int enc5;
 
     string message;
     std::mutex message_mutex;
