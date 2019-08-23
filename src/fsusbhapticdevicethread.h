@@ -15,18 +15,17 @@ struct hid_to_pc_message { // 7*2 = 14 bytes
     short encoder_d;
     short encoder_e;
     short encoder_f;
-    unsigned short debug;
-
+    short info;
 };
 
 struct pc_to_hid_message {  // 7*2 = 14 bytes
     short current_motor_a_mA;
     short current_motor_b_mA;
     short current_motor_c_mA;
-    short force_motor_a_N;
-    short force_motor_b_N;
-    short force_motor_c_N;
-    unsigned short debug;
+    short command; // e.g. reset encoders
+    short command_attr0;
+    short command_attr1;
+    short command_attr2;
 };
 
 
@@ -51,6 +50,7 @@ private:
     hid_device *handle;
     unsigned char buf[15];// 1 extra byte for the report ID
     int res;
+    bool tell_hid_to_calibrate;
 
     hid_to_pc_message hid_to_pc;
     pc_to_hid_message pc_to_hid;

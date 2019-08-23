@@ -13,7 +13,7 @@ TEMPLATE = lib
 CONFIG += dynamiclib
 
 # For Windows we recommend static build for now:
-#CONFIG += staticlib
+CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -48,8 +48,8 @@ CONFIG += use_sensoray
 CONFIG += polhemv2
 
 polhemv2 {
-    #HEADERS += ../haptikfabrikenapi-polhem/polhem.h
-    HEADERS += polhem.h
+    HEADERS += ../fs_polhem/haptikfabrikenapi-polhem/polhem.h
+    #HEADERS += polhem.h
     DEFINES += SUPPORT_POLHEMV2
 }
 

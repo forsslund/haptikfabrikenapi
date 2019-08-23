@@ -333,6 +333,19 @@ public:
             return Kinematics::configuration(data,"polhem_v2 hardcoded");
         }
 
+        static configuration polhem_v3() {
+            double data[] = { 3, 0.0288, 0.0130, 0.010,
+                              0.1, 0.165, 0.1308,
+                              0.175, 0.100, 0.100,
+                              0.137, 0.0, 0.0, 0.150,
+                              0.321, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,1024,
+                              5.0, 2000.0, 1.0,
+                              0.0, 0.0, 0.0, 0.0, 0,
+                              8327,-10926,27140,0,30,0,
+                              0,1,0,0,0,0};
+            return Kinematics::configuration(data,"polhem_v3 hardcoded");
+        }
+
         static configuration aluhaptics_v2() {
             double data[] = { 1, 0.0138, 0.0098, 0.0098,
                               0.111, 0.140, 0.111,

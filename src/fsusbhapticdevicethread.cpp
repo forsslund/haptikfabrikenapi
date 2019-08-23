@@ -21,6 +21,11 @@ void usleep(int us){
 }
 #endif
 
+constexpr int WOODENHAPTICS = 1;
+constexpr int POLHEM_USB = 2;
+
+constexpr int PCB = POLHEM_USB;
+
 namespace haptikfabriken {
 
 
@@ -44,8 +49,8 @@ void FsUSBHapticDeviceThread::thread()
     num_sent_messages = 0;
     num_received_messages = 0;
 
-    // Set protocol 1=Old usb, 2=April 2018
-    int protocol_version = 1;
+    // Set protocol 1=Old usb, 2=April 2018, and for POLHEM
+    int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
 
     // Open connection
     devs = hid_enumerate(0x0, 0x0);
@@ -64,7 +69,7 @@ void FsUSBHapticDeviceThread::thread()
 
     // Open the device using the VID, PID,
     // and optionally the Serial number.
-    handle = hid_open(0x1234, 0x6, NULL);
+    handle = hid_open(0x1234, 0x6, nullptr);
     if (!handle) {
         std::cout << "unable to open device. Is it plugged in and you run as root?\n";
         //return 1;
@@ -77,8 +82,8 @@ void FsUSBHapticDeviceThread::thread()
         std::cout << "Opened USB Connection" << std::endl;
 
 
-    bool forced_inital_calibration = true;
-
+    bool forced_inital_calibration = PCB==WOODENHAPTICS ? true : false;
+    tell_hid_to_calibrate = false;
 
     while(running){
         if(!handle) break;
@@ -122,29 +127,36 @@ void FsUSBHapticDeviceThread::thread()
 
 
 
+        // Check message
+        if(hid_to_pc.info == 1){
+             std::cout << "Calibration requested from hid! \n";
+            tell_hid_to_calibrate = true;
+        } else {
+            tell_hid_to_calibrate = false;
+        }
 
 
 
 
         // *************** COMPUTE POSITION ***********
         // Compute position
-        const int ch_a=-hid_to_pc.encoder_a+offset_encoders[0]; // 2019-05-14 following new standard
-        const int ch_b=-hid_to_pc.encoder_b+offset_encoders[1];
-        const int ch_c=-hid_to_pc.encoder_c+offset_encoders[2];
+        const int ch_a=PCB==POLHEM_USB?hid_to_pc.encoder_a:-hid_to_pc.encoder_a+offset_encoders[0]; // 2019-05-14 following new standard
+        const int ch_b=PCB==POLHEM_USB?hid_to_pc.encoder_b:-hid_to_pc.encoder_b+offset_encoders[1];
+        const int ch_c=PCB==POLHEM_USB?hid_to_pc.encoder_c:-hid_to_pc.encoder_c+offset_encoders[2];
         fsVec3d pos = kinematics.computePosition(ch_a,ch_b,ch_c);
         const int base[] = {ch_a, ch_b, ch_c};
-        const int rot[]  = {hid_to_pc.encoder_d+offset_encoders[3],
-                            hid_to_pc.encoder_e+offset_encoders[4],
-                            hid_to_pc.encoder_f+offset_encoders[5]}; // Encoder d,e,f here if recevied
+        const int rot[]  = {PCB==POLHEM_USB?hid_to_pc.encoder_f:hid_to_pc.encoder_f+offset_encoders[5], // reverse order polhem
+                            PCB==POLHEM_USB?hid_to_pc.encoder_e:hid_to_pc.encoder_e+offset_encoders[4],
+                            PCB==POLHEM_USB?hid_to_pc.encoder_d:hid_to_pc.encoder_d+offset_encoders[3]}; // Encoder d,e,f here if recevied
         fsRot r = kinematics.computeRotation(base,rot);
         fsVec3d angles = kinematics.computeBodyAngles(base);
         mtx_pos.lock();
-        raw_enc[0] = -hid_to_pc.encoder_a;
-        raw_enc[1] = -hid_to_pc.encoder_b;
-        raw_enc[2] = -hid_to_pc.encoder_c;
-        raw_enc[3] = -hid_to_pc.encoder_d;
-        raw_enc[4] = -hid_to_pc.encoder_e;
-        raw_enc[5] = -hid_to_pc.encoder_f;
+        raw_enc[0] = hid_to_pc.encoder_a;
+        raw_enc[1] = hid_to_pc.encoder_b;
+        raw_enc[2] = hid_to_pc.encoder_c;
+        raw_enc[3] = hid_to_pc.encoder_d;
+        raw_enc[4] = hid_to_pc.encoder_e;
+        raw_enc[5] = hid_to_pc.encoder_f;
         latestBodyAngles = angles;
         latestPos = pos;
         latestRot = r;
@@ -182,9 +194,9 @@ void FsUSBHapticDeviceThread::thread()
             mtx_force.unlock();
         }
 
-        pc_to_hid.current_motor_a_mA = int(amps.x()*1000.0);
-        pc_to_hid.current_motor_b_mA = int(amps.y()*1000.0);
-        pc_to_hid.current_motor_c_mA = int(amps.z()*1000.0);
+        pc_to_hid.current_motor_a_mA = short(amps.x()*1000.0);
+        pc_to_hid.current_motor_b_mA = short(amps.y()*1000.0);
+        pc_to_hid.current_motor_c_mA = short(amps.z()*1000.0);
 
         // Cap at 2A since Escons 24/4 cant do more than that for 4s
         if(pc_to_hid.current_motor_a_mA >= max_milliamps) pc_to_hid.current_motor_a_mA = max_milliamps-1;
@@ -196,6 +208,7 @@ void FsUSBHapticDeviceThread::thread()
         if(pc_to_hid.current_motor_c_mA <= -max_milliamps) pc_to_hid.current_motor_c_mA = -max_milliamps+1;
 
 
+        pc_to_hid.command = 0; // Default is send milliamps
 
 
 
@@ -205,11 +218,21 @@ void FsUSBHapticDeviceThread::thread()
         //pc_to_hid.current_motor_a_mA=1234;
         //pc_to_hid.current_motor_b_mA=5678;
         //pc_to_hid.current_motor_c_mA=9012;
-        pc_to_hid.force_motor_a_N=1111;
-        pc_to_hid.force_motor_b_N=2222;
-        pc_to_hid.force_motor_c_N=3333;
-        pc_to_hid.debug=4444;
+        //pc_to_hid.force_motor_a_N=1111;
+        //pc_to_hid.force_motor_b_N=2222;
+        //pc_to_hid.force_motor_c_N=3333;
+        //pc_to_hid.debug=4444;
 
+        if(tell_hid_to_calibrate){
+            std::cout << "Tell hid to calibrate! \n";
+            pc_to_hid.command = 1;
+            pc_to_hid.command_attr0 = short(kinematics.m_config.calibrate_enc_a);
+            pc_to_hid.command_attr1 = short(kinematics.m_config.calibrate_enc_b);
+            pc_to_hid.command_attr2 = short(kinematics.m_config.calibrate_enc_c);
+            pc_to_hid.current_motor_a_mA = short(kinematics.m_config.calibrate_enc_d);
+            pc_to_hid.current_motor_b_mA = short(kinematics.m_config.calibrate_enc_e);
+            pc_to_hid.current_motor_c_mA = short(kinematics.m_config.calibrate_enc_f);
+        }
 
         unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
 
@@ -234,9 +257,11 @@ void FsUSBHapticDeviceThread::thread()
         }
 
         mtx_pos.lock();
-        latestCommandedMilliamps[0] = pc_to_hid.current_motor_a_mA;
-        latestCommandedMilliamps[1] = pc_to_hid.current_motor_b_mA;
-        latestCommandedMilliamps[2] = pc_to_hid.current_motor_c_mA;
+        if(pc_to_hid.command == 0){
+            latestCommandedMilliamps[0] = pc_to_hid.current_motor_a_mA;
+            latestCommandedMilliamps[1] = pc_to_hid.current_motor_b_mA;
+            latestCommandedMilliamps[2] = pc_to_hid.current_motor_c_mA;
+        }
         num_sent_messages++;
         mtx_pos.unlock();
 
@@ -282,7 +307,7 @@ void FsUSBHapticDeviceThread::close()
 
 void FsUSBHapticDeviceThread::calibrate()
 {
-    // Since we are read-only, we only set it using offset.
+
     int calib[] = {int(kinematics.m_config.calibrate_enc_a),
                    int(kinematics.m_config.calibrate_enc_b),
                    int(kinematics.m_config.calibrate_enc_c),
@@ -290,10 +315,16 @@ void FsUSBHapticDeviceThread::calibrate()
                    int(kinematics.m_config.calibrate_enc_e),
                    int(kinematics.m_config.calibrate_enc_f)};
 
-    mtx_pos.lock();
-    for(int i=0;i<6;++i)
-        offset_encoders[i] = calib[i] - raw_enc[i];
-    mtx_pos.unlock();
+    if(PCB == POLHEM_USB)
+        tell_hid_to_calibrate = true;
+    else {
+        // Since we are read-only, we only set it using offset.
+        mtx_pos.lock();
+        for(int i=0;i<6;++i)
+            offset_encoders[i] = calib[i] + raw_enc[i];
+        mtx_pos.unlock();
+    }
+
 
 }
 

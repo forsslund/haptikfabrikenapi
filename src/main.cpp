@@ -59,8 +59,8 @@ int main()
 
 
     HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::polhem_v2(),
-                               HaptikfabrikenInterface::DAQ);
+                               Kinematics::configuration::polhem_v3(),
+                               HaptikfabrikenInterface::USB);
     hi.open();
 
 
@@ -69,6 +69,8 @@ int main()
     hi.calibrate();
 
 
+
+    int printcount = 100;
 
     bool active_phase=true;
     while(active_phase){
@@ -87,21 +89,26 @@ int main()
         fsVec3d x = v;
         fsVec3d f = -k*x;//fsVec3d(0,1,0);
 
-        //hi.setForce(f);
+        // Set force
+        hi.setForce(f);
 
-        // Set actual current in Amperes to respective motor (a,b,c)
-        hi.setCurrent(fsVec3d(0.1,0.1,0.1));
+        // Alternatively, set actual current in Amperes to respective motor (a,b,c)
+        //hi.setCurrent(fsVec3d(0.1,0.1,0.1));
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
 
-        std::cout << "Position: " << toString(v)
-                  << " enc: " << e[0] << " " << e[1] << " " << e[2]
-                  << " angles: "<< toString(thetas)
-                  << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<"\n";
+        if(printcount--==0){
+            std::cout << "P: " << toString(v)
+                      << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
+                                  << e[3] << " " << e[4] << " " << e[5]
+                      << " t: "<< toString(thetas)
+                      << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<"\n";
+            printcount = 100;
+        }
 
 
-        std::this_thread::sleep_for(100*one_millisecond);
+        std::this_thread::sleep_for(1*one_millisecond);
     }
 
     cout << "Goodbye World!" << endl;
