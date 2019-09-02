@@ -1,7 +1,6 @@
 #include "fsusbhapticdevicethread.h"
 #include "../external/hidapi/hidapi.h"
 
-
 // For USB HID version
 #include <stdio.h>
 #include <wchar.h>
@@ -9,7 +8,6 @@
 #include <stdlib.h>
 
 #include <sstream>
-
 #include <thread>
 #include <chrono>
 
@@ -28,13 +26,9 @@ constexpr int PCB = POLHEM_USB;
 
 namespace haptikfabriken {
 
-
 FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(bool wait_for_next_message,
                                                  Kinematics::configuration c):
-    FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),w(0)
-{
-
-}
+    FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),w(0){}
 
 void FsUSBHapticDeviceThread::thread()
 {
@@ -44,7 +38,6 @@ void FsUSBHapticDeviceThread::thread()
         w->initialize();
     }
 
-
     // For debugging
     num_sent_messages = 0;
     num_received_messages = 0;
@@ -52,79 +45,63 @@ void FsUSBHapticDeviceThread::thread()
     // Set protocol 1=Old usb, 2=April 2018, and for POLHEM
     int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
 
-    // Open connection
-    devs = hid_enumerate(0x0, 0x0);
-    cur_dev = devs;
-    while (cur_dev) {
-        printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls", cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
-        printf("\n");
-        printf("  Manufacturer: %ls\n", cur_dev->manufacturer_string);
-        printf("  Product:      %ls\n", cur_dev->product_string);
-        printf("  Release:      %hx\n", cur_dev->release_number);
-        printf("  Interface:    %d\n",  cur_dev->interface_number);
-        printf("\n");
-        cur_dev = cur_dev->next;
-    }
-    hid_free_enumeration(devs);
-
     // Open the device using the VID, PID,
     // and optionally the Serial number.
-    handle = hid_open(0x1234, 0x6, nullptr);
+    hid_device *handle = hid_open(0x1234, 0x6, nullptr);
     if (!handle) {
-        std::cout << "unable to open device. Is it plugged in and you run as root?\n";
-        //return 1;
+        std::cout << "unable to open device. Is it plugged in and you run with right permission (or as root?)\n";
+        return;
     }
-    // Set the hid_read() function to be non-blocking.
-    if(handle)
-        hid_set_nonblocking(handle, 1);
+    std::cout << "Opened USB Connection" << std::endl;
 
-    if(handle)
-        std::cout << "Opened USB Connection" << std::endl;
-
-
-    bool forced_inital_calibration = PCB==WOODENHAPTICS ? true : false;
     tell_hid_to_calibrate = false;
+    bool forced_inital_calibration = PCB==WOODENHAPTICS ? true : false;
+    const int out_bytes = (protocol_version==2)? 15: 9;
+    const int in_bytes = (protocol_version==2)? 15: 9;
+    unsigned char in_buf[in_bytes];
+
+    std::chrono::duration<int, std::micro> microsecond{1};
+
+    hid_to_pc_message hid_to_pc;
+    pc_to_hid_message pc_to_hid;
 
     while(running){
-        if(!handle) break;
-
-
         // **************** RECEIVE ***************
-        int res=0;
-        int count=0;
-        for(int i=0;i<15;++i) buf[i]=0;
-        while (res == 0) {
-            res = hid_read(handle, buf, sizeof(buf));
-            char* dataptr = reinterpret_cast<char*>(buf);
-            if(res==14 || res==8) // Got a correct message
-                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(dataptr);
-            if(res==8){
-                hid_to_pc.encoder_d=0;
-                hid_to_pc.encoder_e=0;
-                hid_to_pc.encoder_f=0;
-            }
-            usleep(5);
-            count++;
-            //if(!(count%1000)) std::cout << "(count: " << count << ")\n";
-        }
-        //std::cout << "count: " << count << "\n";
+        for(int i=0;i<in_bytes;++i) in_buf[i]=0;
 
-        int flush=0;
-        while(hid_read(handle, buf, sizeof(buf)) && running){
-            char* dataptr = reinterpret_cast<char*>(buf);
-            if(res==14 || res==8) // Got a correct message
-                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(dataptr);
-            if(res==8){
-                hid_to_pc.encoder_d=0;
-                hid_to_pc.encoder_e=0;
-                hid_to_pc.encoder_f=0;
-            }
-            ++flush;
-        }
-        //if(flush)
-        //    std::cout << "Flushed " << flush << " messages." << std::endl;
-        //lost_messages += flush;
+        // Wait here for message
+        hid_set_nonblocking(handle, 0);
+        int res = hid_read_timeout(handle, in_buf, in_bytes, 10);
+        if(res==0) {
+            if(!running) break; // we are quitting
 
+            // Send a 0 to kick start the mbed to send
+            std::cout << "Send inital report\n";
+            pc_to_hid = {};
+            unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
+            int error = hid_write(handle,msg_buf,out_bytes);
+            if(error!=out_bytes)
+                std::cout << "hid_write return " << error << std::endl;
+            continue; // new try receive
+        }
+        if(res==-1) std::cout << "Error reading from usb\n";
+
+        // Got message
+        int receive_count_this_loop = 1;
+        char* dataptr = reinterpret_cast<char*>(in_buf);
+        hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(dataptr);
+
+        // If there are more messages in the queqe, skip
+        // until the last one.
+        hid_set_nonblocking(handle, 1);
+        while((res=hid_read(handle, in_buf, sizeof(in_buf)))){
+            if(res==-1) break;
+            dataptr = reinterpret_cast<char*>(in_buf);
+            hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(dataptr);
+            this_thread::sleep_for(1*microsecond);
+            receive_count_this_loop++;
+        }
+        if(res==-1) std::cout << "Error reading from usb\n";
 
 
         // Check message
@@ -134,8 +111,6 @@ void FsUSBHapticDeviceThread::thread()
         } else {
             tell_hid_to_calibrate = false;
         }
-
-
 
 
         // *************** COMPUTE POSITION ***********
@@ -166,9 +141,8 @@ void FsUSBHapticDeviceThread::thread()
         latestEnc[3]=rot[0];
         latestEnc[4]=rot[1];
         latestEnc[5]=rot[2];
-        num_received_messages += 1 + flush;
+        num_received_messages += receive_count_this_loop;
         mtx_pos.unlock();
-
 
 
         if(forced_inital_calibration){
@@ -180,20 +154,23 @@ void FsUSBHapticDeviceThread::thread()
 
 
 
-
-        // *************** GET WHAT TO SEND *****
-        mtx_force.lock();
-        fsVec3d f = nextForce;
-        mtx_force.unlock();
-
-        fsVec3d amps = kinematics.computeMotorAmps(f,base);
-
+        // *************** GET WHAT TO SEND *****        
+        // Compute amps to send
+        fsVec3d amps;
+        fsVec3d f;
         if(useCurrentDirectly){
             mtx_force.lock();
             amps = nextCurrent;
             mtx_force.unlock();
+        } else {
+            mtx_force.lock();
+            f = nextForce;
+            mtx_force.unlock();
+            amps = kinematics.computeMotorAmps(f,base);
         }
 
+        pc_to_hid={}; // Clear
+        pc_to_hid.command = 0; // Default is send milliamps
         pc_to_hid.current_motor_a_mA = short(amps.x()*1000.0);
         pc_to_hid.current_motor_b_mA = short(amps.y()*1000.0);
         pc_to_hid.current_motor_c_mA = short(amps.z()*1000.0);
@@ -208,21 +185,6 @@ void FsUSBHapticDeviceThread::thread()
         if(pc_to_hid.current_motor_c_mA <= -max_milliamps) pc_to_hid.current_motor_c_mA = -max_milliamps+1;
 
 
-        pc_to_hid.command = 0; // Default is send milliamps
-
-
-
-        // **************** SEND ***************
-
-        // Fake data
-        //pc_to_hid.current_motor_a_mA=1234;
-        //pc_to_hid.current_motor_b_mA=5678;
-        //pc_to_hid.current_motor_c_mA=9012;
-        //pc_to_hid.force_motor_a_N=1111;
-        //pc_to_hid.force_motor_b_N=2222;
-        //pc_to_hid.force_motor_c_N=3333;
-        //pc_to_hid.debug=4444;
-
         if(tell_hid_to_calibrate){
             std::cout << "Tell hid to calibrate! \n";
             pc_to_hid.command = 1;
@@ -234,27 +196,12 @@ void FsUSBHapticDeviceThread::thread()
             pc_to_hid.current_motor_c_mA = short(kinematics.m_config.calibrate_enc_f);
         }
 
+
+        // **************** SEND ***************
         unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
-
-
-        int byte_length = 9;  // Old protocol
-        if(protocol_version==2)
-            byte_length = 15; // New protocol April 2018
-
-
-        //Fill the report
-        unsigned char out_buf[15]; // const max of 9 and 15
-        out_buf[0] = 0;
-        for (int i = 1; i < byte_length; i++) {
-            out_buf[i] = msg_buf[i-1];
-        }
-        if(handle){
-            //std::cout << "size: " << sizeof(out_buf) << "\n";
-            int error = hid_write(handle,out_buf,sizeof(out_buf));
-            if(error!=byte_length){
-                std::cout << "hid_write return " << error << std::endl;
-            }
-        }
+        res = hid_write(handle,msg_buf,out_bytes);
+        if(res!=out_bytes)
+            std::cout << "hid_write return " << res << std::endl;
 
         mtx_pos.lock();
         if(pc_to_hid.command == 0){
@@ -263,10 +210,8 @@ void FsUSBHapticDeviceThread::thread()
             latestCommandedMilliamps[2] = pc_to_hid.current_motor_c_mA;
         }
         num_sent_messages++;
-        mtx_pos.unlock();
-
-        // SENT
         currentForce = f;
+        mtx_pos.unlock();
 
 
         // Set webserver info
@@ -276,7 +221,6 @@ void FsUSBHapticDeviceThread::thread()
            <<", " << rot[1] << ", " << rot[2] << "],\n";
         ss << "\"CommandedMilliamps\": [" << latestCommandedMilliamps[0] << ", "
            << latestCommandedMilliamps[1] << ", " << latestCommandedMilliamps[2] << "],\n";
-
         ss << "\"Position\": [" << toString(pos*1000.0) << "],\n";
         ss << "\"Orientation\": [\n" << toString(r) << "],\n";
         ss << "\"BodyAngles\": [" << toString(angles) << "],\n";
@@ -296,8 +240,6 @@ void FsUSBHapticDeviceThread::thread()
         hid_close(handle);
         hid_exit();
     }
-
-
 }
 
 void FsUSBHapticDeviceThread::close()
@@ -307,7 +249,6 @@ void FsUSBHapticDeviceThread::close()
 
 void FsUSBHapticDeviceThread::calibrate()
 {
-
     int calib[] = {int(kinematics.m_config.calibrate_enc_a),
                    int(kinematics.m_config.calibrate_enc_b),
                    int(kinematics.m_config.calibrate_enc_c),
@@ -324,8 +265,6 @@ void FsUSBHapticDeviceThread::calibrate()
             offset_encoders[i] = calib[i] + raw_enc[i];
         mtx_pos.unlock();
     }
-
-
 }
 
 }

@@ -72,6 +72,8 @@ int main()
 
     int printcount = 100;
 
+    double t=0;
+
     bool active_phase=true;
     while(active_phase){
         if(_kbhit()) {
@@ -99,12 +101,18 @@ int main()
         hi.getLatestCommandedMilliamps(ma);
 
         if(printcount--==0){
+            t+=0.1;
+
             std::cout << "P: " << toString(v)
                       << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
                                   << e[3] << " " << e[4] << " " << e[5]
                       << " t: "<< toString(thetas)
-                      << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<"\n";
-            printcount = 100;
+                      << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<
+                         " " <<  hi.getNumReceivedMessages() << " " << hi.getNumSentMessages() <<
+                      " " <<  hi.getNumReceivedMessages()/t << " " << hi.getNumSentMessages()/t
+                      <<"\n";
+
+printcount = 100;
         }
 
 

@@ -75,7 +75,6 @@ int haptikfabriken::HaptikfabrikenInterface::getNumReceivedMessages()
 
 haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getPos()
 {
-    fsthread->num_received_messages++;
     if(std::abs(fsthread->oldPosition.x() - fsthread->getPos().x())>0.01){
         fsthread->oldPosition = fsthread->getPos();
 
