@@ -57,7 +57,7 @@ void FsUSBHapticDeviceThread::thread()
     num_received_messages = 0;
 
     // Set protocol 1=Old usb, 2=April 2018, and for POLHEM
-    int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
+    constexpr int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
 
     // Open the device using the VID, PID,
     // and optionally the Serial number.
