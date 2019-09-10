@@ -45,7 +45,8 @@ int main()
     cout << "Welcome to Haptikfabriken API!\nPress any key to close." << endl;
 
     // Select model
-    Kinematics::configuration c = Kinematics::configuration::polhem_v2();
+    Kinematics::configuration c = Kinematics::configuration::polhem_v3();
+    //Kinematics::configuration c = Kinematics::configuration::polhem_v2();
     //Kinematics::configuration c = Kinematics::configuration::polhem_v1();
     //Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2015();
     //Kinematics::configuration c = Kinematics::configuration::aluhaptics_v2();
@@ -56,8 +57,8 @@ int main()
     bool wait_for_next_message = false;
 
     // Create haptics communication thread.
-    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::DAQ);
-    //HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
+    //HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::DAQ);
+    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
 
     // Optionally set max millimaps according to your escons (default 2000). Might need to set in firmware too.
     hfab.max_milliamps = 4000;
@@ -66,11 +67,14 @@ int main()
     hfab.open();
 
     // Verbose or not (set to at least 1 to show debug messages)
-    int verbose=1;
+    int verbose=0;
 
     // Main loop doing some haptic rendering
     bool running=true;
 
+
+    double dir=1;
+    double amplitude=0.01;
     while(running){
         if(_kbhit()) {
             char cc;
@@ -143,11 +147,19 @@ int main()
 
 
         // Set force
-        hfab.setForce(f);
+        //hfab.setForce(f);
 
         // Or, set current to the motors directly, in amps
-        //fsVec3d amps = fsVec3d(0.1,0,0);
-        //fs.setCurrent(amps);
+        //amplitude=0.1;
+        std::cout << "Output amps: " << dir*amplitude << " " << dir << "\n";
+        fsVec3d amps = fsVec3d(1*dir*amplitude,4*dir*amplitude,4*dir*amplitude);
+        hfab.setCurrent(amps);
+
+        this_thread::sleep_for(std::chrono::milliseconds(1000));
+        dir=-1*dir;
+        //amplitude= (amplitude<0.05) ? 0.1 : 0.001;
+
+
 
         // If you want you have access to the core values, e.g. encoders
         int enc[6];
@@ -172,14 +184,14 @@ int main()
         }
 
         // Sleep e.g. 1ms = 1000us
-        this_thread::sleep_for(std::chrono::microseconds(1000));
+        //this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 
 
     hfab.close();
 
-    char cc;
-    std::cin >> cc;
+    //char cc;
+    //std::cin >> cc;
 
 
     return 0;

@@ -2,8 +2,11 @@
 #define FSUSBHAPTICDEVICETHREAD_H
 
 #include "fshapticdevicethread.h"
-
 #include "webserv.h"
+
+// Uncomment to use the second usb port for sending serial data.
+// No improvement shown however. For experimentation only.
+//#define SERIAL_READ
 
 namespace haptikfabriken {
 
@@ -39,6 +42,10 @@ public:
 
     void thread();
     void close();
+    int open();
+#ifdef SERIAL_READ
+    void usb_serial_thread();
+#endif
 
     ~FsUSBHapticDeviceThread(){
         std::cout << "Fsusb desctructor\n";
@@ -51,8 +58,17 @@ private:
     int raw_enc[6];
 
     bool tell_hid_to_calibrate;
+    bool firstMessage{false};
 
     Webserv* w;
+
+
+#ifdef SERIAL_READ
+    boost::thread* m_thread_usb_serial = 0;
+    boost::mutex mtx_serial_data;
+    int serial_data_received = 0;
+    short serial_data;
+#endif
 
 };
 }

@@ -19,6 +19,15 @@ void usleep(int us){
 }
 #endif
 
+#ifdef SERIAL_READ
+// Linux headers
+#include <fcntl.h> // Contains file controls like O_RDWR
+#include <errno.h> // Error integer and strerror() function
+#include <termios.h> // Contains POSIX terminal control definitions
+#include <unistd.h> // write(), read(), close()
+#endif
+
+
 constexpr int WOODENHAPTICS = 1;
 constexpr int POLHEM_USB = 2;
 
@@ -37,6 +46,11 @@ void FsUSBHapticDeviceThread::thread()
         w = new Webserv();
         w->initialize();
     }
+
+#ifdef SERIAL_READ
+    // Start receving usb serial thread
+    m_thread_usb_serial = new boost::thread(boost::bind(&FsUSBHapticDeviceThread::usb_serial_thread, this));
+#endif
 
     // For debugging
     num_sent_messages = 0;
@@ -65,13 +79,32 @@ void FsUSBHapticDeviceThread::thread()
     hid_to_pc_message hid_to_pc;
     pc_to_hid_message pc_to_hid;
 
+    using namespace std::chrono;
+
+    high_resolution_clock::time_point t1,t2;
+
+
     while(running){
+        t1 = high_resolution_clock::now();
+
+        int receive_count_this_loop = 0;
+
+
+#ifdef SERIAL_READ
+        mtx_serial_data.lock();
+        hid_to_pc.encoder_d = serial_data;
+        receive_count_this_loop = serial_data_received;
+        serial_data_received=0;
+        mtx_serial_data.unlock();
+#endif
+
         // **************** RECEIVE ***************
         for(int i=0;i<in_bytes;++i) in_buf[i]=0;
+        int res=0;
 
         // Wait here for message
         hid_set_nonblocking(handle, 0);
-        int res = hid_read_timeout(handle, in_buf, in_bytes, 10);
+        res = hid_read_timeout(handle, in_buf, in_bytes, 10);
         if(res==0) {
             if(!running) break; // we are quitting
 
@@ -81,13 +114,13 @@ void FsUSBHapticDeviceThread::thread()
             unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
             int error = hid_write(handle,msg_buf,out_bytes);
             if(error!=out_bytes)
-                std::cout << "hid_write return " << error << std::endl;
+                std::cout << "initial hid_write return " << error << std::endl;
             continue; // new try receive
         }
         if(res==-1) std::cout << "Error reading from usb\n";
+        receive_count_this_loop++;
 
         // Got message
-        int receive_count_this_loop = 1;
         char* dataptr = reinterpret_cast<char*>(in_buf);
         hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(dataptr);
 
@@ -102,6 +135,9 @@ void FsUSBHapticDeviceThread::thread()
             receive_count_this_loop++;
         }
         if(res==-1) std::cout << "Error reading from usb\n";
+
+        if(receive_count_this_loop>1)
+          std::cout << "additional read: " << receive_count_this_loop << " \n";
 
 
         // Check message
@@ -150,6 +186,9 @@ void FsUSBHapticDeviceThread::thread()
             forced_inital_calibration = false;
             continue;
         }
+
+
+        firstMessage=true;
 
 
 
@@ -203,6 +242,8 @@ void FsUSBHapticDeviceThread::thread()
         if(res!=out_bytes)
             std::cout << "hid_write return " << res << std::endl;
 
+        t2 = high_resolution_clock::now();
+
         mtx_pos.lock();
         if(pc_to_hid.command == 0){
             latestCommandedMilliamps[0] = pc_to_hid.current_motor_a_mA;
@@ -235,17 +276,116 @@ void FsUSBHapticDeviceThread::thread()
         if(w) w->setMessage(ss.str());
     }
 
+
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+
+    std::cout << "\n\nIt took me " << time_span.count() << " seconds.\n\n";
+
     //close HID device
     if(handle){
         hid_close(handle);
         hid_exit();
     }
+
+
 }
 
 void FsUSBHapticDeviceThread::close()
 {
     FsHapticDeviceThread::close();
 }
+
+int FsUSBHapticDeviceThread::open()
+{
+    // Start normal thread
+    FsHapticDeviceThread::open();
+
+    std::chrono::duration<int, std::micro> microsecond{1};
+    while(!firstMessage) this_thread::sleep_for(1000*microsecond);
+
+    return 0;
+}
+
+#ifdef SERIAL_READ
+void FsUSBHapticDeviceThread::usb_serial_thread()
+{
+
+    int serial_port = ::open("/dev/ttyACM0", O_RDWR);
+    char read_buf [100];
+
+
+
+    // Create new termios struc, we call it 'tty' for convention
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+
+    // Read in existing settings, and handle any error
+    if(tcgetattr(serial_port, &tty) != 0) {
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+    }
+
+    tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
+    tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
+    tty.c_cflag |= CS8; // 8 bits per byte (most common)
+    tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
+    tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
+
+    tty.c_lflag &= ~ICANON;
+    tty.c_lflag &= ~ECHO; // Disable echo
+    tty.c_lflag &= ~ECHOE; // Disable erasure
+    tty.c_lflag &= ~ECHONL; // Disable new-line echo
+    tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+
+    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+    tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+    // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
+    // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
+
+    tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+    tty.c_cc[VMIN] = 0;
+
+    // Set in/out baud rate to be 9600
+    cfsetispeed(&tty, B115200);
+    cfsetospeed(&tty, B115200);
+
+    // Save tty settings, also checking for error
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+    }
+
+
+
+    while (running) {
+        memset(&read_buf, '\0', sizeof(read_buf));
+
+        int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+        // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
+        if (num_bytes < 0) {
+            printf("Error reading: %s", strerror(errno));
+            break;
+        }
+        if (num_bytes == 0) continue;
+        //cout << "read: " << read_buf << "\n";
+
+        if(num_bytes>14)
+            printf("Read %i bytes. Received message: %s", num_bytes, read_buf);
+
+
+        //stringstream in(read_buf);
+        mtx_serial_data.lock();
+        sscanf(read_buf,"%hd",&serial_data);
+        //receive_count_this_loop++;
+        serial_data_received++;
+        mtx_serial_data.unlock();
+
+
+
+    }
+    ::close(serial_port);
+}
+#endif
 
 void FsUSBHapticDeviceThread::calibrate()
 {

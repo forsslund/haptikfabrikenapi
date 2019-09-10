@@ -66,7 +66,7 @@ int main()
 
     std::this_thread::sleep_for(hundred_milliseconds);
     std::this_thread::sleep_for(hundred_milliseconds);
-    hi.calibrate();
+    //hi.calibrate();
 
 
 
@@ -87,9 +87,18 @@ int main()
         fsVec3d thetas = hi.getBodyAngles()*(180/3.141592);
 
 
-        double k = 100;
+        double k = 500;
+        /*
+         * Spring to the 0,0,0
+         */
+        /*
         fsVec3d x = v;
         fsVec3d f = -k*x;//fsVec3d(0,1,0);
+        */
+
+        fsVec3d f;
+        if(v.m_y>0.01) f.m_y = -k*(v.m_y-0.01);
+
 
         // Set force
         hi.setForce(f);
