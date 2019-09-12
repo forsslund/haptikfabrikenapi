@@ -73,13 +73,13 @@ int haptikfabriken::HaptikfabrikenInterface::getNumReceivedMessages()
     return fsthread->getNumReceivedMessages();
 }
 
-haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getPos()
+haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getPos(bool blocking)
 {
     if(std::abs(fsthread->oldPosition.x() - fsthread->getPos().x())>0.01){
         fsthread->oldPosition = fsthread->getPos();
 
     }
-    return fsthread->getPos();
+    return fsthread->getPos(blocking);
 }
 
 haptikfabriken::fsRot haptikfabriken::HaptikfabrikenInterface::getRot()
@@ -87,7 +87,7 @@ haptikfabriken::fsRot haptikfabriken::HaptikfabrikenInterface::getRot()
     return fsthread->getRot();
 }
 
-void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f)
+void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f, bool blocking)
 {
     // Limit to 5N
     double magnitude = sqrt(f.m_x*f.m_x+f.m_y*f.m_y+f.m_z*f.m_z);
@@ -96,7 +96,7 @@ void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f
             f = dir*5.0;
     }
 
-    fsthread->setForce(f);
+    fsthread->setForce(f,blocking);
 }
 
 void haptikfabriken::HaptikfabrikenInterface::setCurrent(haptikfabriken::fsVec3d amps)

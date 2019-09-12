@@ -70,6 +70,9 @@ void Webserv::jonas_reply(HttpServer::Response& response,
     message_mutex.lock();
     enc5 = atoi(s.c_str());
     message_mutex.unlock();
+
+    // Clock our last message
+    lastEnc5message = chrono::high_resolution_clock::now();
   }
 
   message_mutex.lock();
@@ -161,6 +164,16 @@ int Webserv::getEnc5()
     r = enc5;
     message_mutex.unlock();
     return r;
+}
+
+bool Webserv::activeEnc5()
+{
+    using namespace chrono;
+    high_resolution_clock::time_point t2;
+    duration<double> time_span = duration_cast<duration<double>>(t2 - lastEnc5message);
+
+    // True if we got a message within the last second
+    return time_span.count() < 1;
 }
 
 void Webserv::initialize(int port)

@@ -99,9 +99,11 @@ void FsDAQHapticDeviceThread::thread()
             rot[0] = signedenc(5);
             rot[1] = signedenc(4);
             // Normally we get from daq
-            //rot[2] = signedenc(3);
             // 2019-08-21 Get from Web..! (bluetooth proxy)
-            rot[2] = w->getEnc5();
+            if(w->activeEnc5())
+                rot[2] = w->getEnc5();
+            else
+                rot[2] = signedenc(3);
         } else{
             rot[0] = signedenc(3);
             rot[1] = signedenc(4);

@@ -215,7 +215,7 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
 }
 
 FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message, Kinematics::configuration c):
-    sem_force_sent(0),newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
+    sem_force_sent(0),sem_getpos(0), sem_setforce(0), newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
 {
     std::cout << "FsHapticDeviceThread::FsHapticDeviceThread()\n";
     app_start = chrono::steady_clock::now();

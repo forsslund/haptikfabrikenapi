@@ -80,6 +80,8 @@ public:
 
     boost::mutex mtx_pos;
     boost::mutex mtx_force;
+    boost::interprocess::interprocess_semaphore sem_getpos;
+    boost::interprocess::interprocess_semaphore sem_setforce;
 
     inline void getEnc(int a[]){
         mtx_pos.lock();
@@ -114,7 +116,11 @@ public:
         return r;
     }
 
-    inline fsVec3d getPos() {
+    inline fsVec3d getPos(bool blocking=false) {
+        if(blocking){
+            sem_getpos.wait();
+            while(sem_getpos.try_wait());
+        }
         mtx_pos.lock();
         fsVec3d p = latestPos;
         mtx_pos.unlock();
@@ -134,7 +140,7 @@ public:
         return b;
     }
 
-    inline void setForce(fsVec3d f){
+    inline void setForce(fsVec3d f, bool blocking=false){
         useCurrentDirectly = false;
         mtx_force.lock();
         nextForce = f;
@@ -144,6 +150,10 @@ public:
         // wait until at least one new force message has been sent (received a new package)
         if(wait_for_next_message)
             sem_force_sent.wait();
+
+        //if(blocking){
+        //    sem_setforce.post();
+        //}
     }
     inline void setCurrent(fsVec3d amps){
         useCurrentDirectly = true;

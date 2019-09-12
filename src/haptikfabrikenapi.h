@@ -417,9 +417,9 @@ public:
     int getNumSentMessages(); // usb communications statistics
     int getNumReceivedMessages();
 
-    fsVec3d getPos();              // Get cartesian coords xyz using kineamtics model
+    fsVec3d getPos(bool blocking=false);              // Get cartesian coords xyz using kineamtics model
     fsRot getRot();                // Get orientaion of manipulandum
-    void setForce(fsVec3d f);      // Set force using kineamtics model, e.g. in xyz
+    void setForce(fsVec3d f, bool blocking=false);      // Set force using kineamtics model, e.g. in xyz
     void setCurrent(fsVec3d amps); // Set the 3 motor amps directly (not cartesian coords.)
     std::bitset<5> getSwitchesState();
 

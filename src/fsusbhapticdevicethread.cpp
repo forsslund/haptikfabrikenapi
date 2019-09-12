@@ -148,6 +148,10 @@ void FsUSBHapticDeviceThread::thread()
             tell_hid_to_calibrate = false;
         }
 
+        // If encoder set by webserv, use that instead
+        if(w->activeEnc5())
+            hid_to_pc.encoder_d = short(w->getEnc5());
+
 
         // *************** COMPUTE POSITION ***********
         // Compute position
@@ -190,6 +194,13 @@ void FsUSBHapticDeviceThread::thread()
 
         firstMessage=true;
 
+
+
+        // Inform blocking calls to getPos() that we now have a new position
+        sem_getpos.post();
+
+        //sem_setforce.wait();
+        //while(sem_setforce.try_wait());
 
 
 

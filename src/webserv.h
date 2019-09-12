@@ -30,6 +30,7 @@ public:
 
     void setMessage(string s);
     int getEnc5();
+    bool activeEnc5();
 
 private:
     thread webservThread;
@@ -40,6 +41,7 @@ private:
     string message;
     std::mutex message_mutex;
 
+    std::chrono::high_resolution_clock::time_point lastEnc5message;
 
 };
 

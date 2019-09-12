@@ -87,7 +87,7 @@ int main()
         fsVec3d thetas = hi.getBodyAngles()*(180/3.141592);
 
 
-        double k = 500;
+        double k = 1500;
         /*
          * Spring to the 0,0,0
          */
