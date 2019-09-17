@@ -398,7 +398,7 @@ public:
     enum Protocol {DAQ,UDP,USB};
 
     HaptikfabrikenInterface(bool wait_for_next_message=false,
-                            Kinematics::configuration c=Kinematics::configuration::polhem_v2(),
+                            Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
                             Protocol protocol=DAQ);
     ~HaptikfabrikenInterface();
 

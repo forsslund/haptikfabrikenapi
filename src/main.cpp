@@ -60,7 +60,7 @@ int main()
 
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::polhem_v3(),
-                               HaptikfabrikenInterface::USB);
+                               HaptikfabrikenInterface::DAQ);
     hi.open();
 
 
@@ -75,6 +75,8 @@ int main()
     double t=0;
 
     bool active_phase=true;
+
+    int current=1;
     while(active_phase){
         if(_kbhit()) {
             char cc;
@@ -101,10 +103,10 @@ int main()
 
 
         // Set force
-        hi.setForce(f);
+        //hi.setForce(f);
 
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
-        //hi.setCurrent(fsVec3d(0.1,0.1,0.1));
+        hi.setCurrent(fsVec3d(current*0.2,current*0.2,0));
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
@@ -125,7 +127,8 @@ printcount = 100;
         }
 
 
-        std::this_thread::sleep_for(1*one_millisecond);
+        std::this_thread::sleep_for(400*one_millisecond);
+        current=!current;
     }
 
     cout << "Goodbye World!" << endl;

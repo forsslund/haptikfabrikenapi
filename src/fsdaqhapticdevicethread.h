@@ -18,7 +18,8 @@ public:
 
     void thread();
     void close();
-    void calibrate();
+    void calibrate() { calibrate(false); }
+    void calibrate(bool force=false);
     int open();
 
     void ixthread(int ixchan);

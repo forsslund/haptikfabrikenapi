@@ -308,14 +308,15 @@ void FsDAQHapticDeviceThread::ixthread(int ixchan)
                 mtx_pos.unlock();
 
                 if(enable_calibration_button_ix0)
-                    if(reason==8 && ixchan==0) calibrate(); // To calibrate etc
+                    if(reason==8 && ixchan==0) calibrate(true); // To calibrate etc
             }
         }
     }
 }
 
-void FsDAQHapticDeviceThread::calibrate()
+void FsDAQHapticDeviceThread::calibrate(bool force)
 {
+    if((!force) && calibration_performed()) return;
     //double stopsDeg[6] = {120.45,124.8,238.55,0,0,0};
 
     constexpr unsigned int maxdata = 0xFFFFFFFF; // 32 bit
@@ -424,6 +425,7 @@ int FsDAQHapticDeviceThread::open()
     for(unsigned int i=0;i<3;++i){
         // And range of analoge signal to escon
         S826_DacRangeWrite(0,i,3,0); //-10 to 10 V
+        setVolt(0,i);
     }
     // Enable ESCON driver by a digial signal, which in our case
     // is an analogue signal due to the fact that we only have the
