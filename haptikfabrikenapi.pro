@@ -5,15 +5,15 @@
 # with boost and sensoray.
 #
 # For testing/experimentation uncomment (remove #) these lines (and run qmake)...
-#TEMPLATE = app
-#SOURCES += src/main.cpp
+TEMPLATE = app
+SOURCES += src/main.cpp
 
 # ...and comment these lines out:
-TEMPLATE = lib
+#TEMPLATE = lib
 #CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-CONFIG += staticlib
+#CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -68,7 +68,8 @@ SOURCES +=   src/kinematics.cpp \
 
 HEADERS += src/kinematics.h \
     src/fshapticdevicethread.h \
-    src/haptikfabrikenapi.h
+    src/haptikfabrikenapi.h \
+    src/json.hpp # https://github.com/nlohmann/json/releases v. 3.7.0
 
 
 

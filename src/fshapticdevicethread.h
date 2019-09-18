@@ -140,7 +140,7 @@ public:
         return b;
     }
 
-    inline void setForce(fsVec3d f, bool blocking=false){
+    inline void setForce(fsVec3d f){
         useCurrentDirectly = false;
         mtx_force.lock();
         nextForce = f;
@@ -259,7 +259,7 @@ public:
 
 
 
-    boost::thread* m_thread = 0;
+    boost::thread* m_thread = nullptr;
 
 
 

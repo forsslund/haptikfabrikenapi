@@ -9,7 +9,7 @@
 #include <iomanip>
 
 haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_next_message,
-       haptikfabriken::Kinematics::configuration c, Protocol protocol):kinematicModel(c),fsthread(0)
+       haptikfabriken::Kinematics::configuration c, Protocol protocol):kinematicModel(c),fsthread(nullptr)
 {
     switch(protocol){
     case DAQ:
@@ -28,7 +28,7 @@ haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_n
 
 haptikfabriken::HaptikfabrikenInterface::~HaptikfabrikenInterface()
 {
-    std::cout<< "Haptifabriken destructor: " << this << "\n"; if(fsthread) delete fsthread; fsthread=0;
+    std::cout<< "Haptifabriken destructor: " << this << "\n"; if(fsthread) delete fsthread; fsthread=nullptr;
 }
 
 int haptikfabriken::HaptikfabrikenInterface::open()
@@ -87,7 +87,7 @@ haptikfabriken::fsRot haptikfabriken::HaptikfabrikenInterface::getRot()
     return fsthread->getRot();
 }
 
-void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f, bool blocking)
+void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f)
 {
     // Limit to 5N
     double magnitude = sqrt(f.m_x*f.m_x+f.m_y*f.m_y+f.m_z*f.m_z);
@@ -96,7 +96,7 @@ void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f
             f = dir*5.0;
     }
 
-    fsthread->setForce(f,blocking);
+    fsthread->setForce(f);
 }
 
 void haptikfabriken::HaptikfabrikenInterface::setCurrent(haptikfabriken::fsVec3d amps)
