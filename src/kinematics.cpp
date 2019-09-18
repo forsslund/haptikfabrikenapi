@@ -259,7 +259,7 @@ std::string toJSON(const Kinematics::configuration& c){
         << j("motor_and_body_aligned_b", c.motor_and_body_aligned_b)
         << j("motor_and_body_aligned_c", c.motor_and_body_aligned_c)
         << j("enc_and_body_aligned_d", c.enc_and_body_aligned_d)
-        << j("enc_and_body_aligned_d", c.enc_and_body_aligned_e)
+        << j("enc_and_body_aligned_e", c.enc_and_body_aligned_e)
         << j("enc_and_body_aligned_f", c.enc_and_body_aligned_f, true)
         << "}" << endl;
    return json.str();

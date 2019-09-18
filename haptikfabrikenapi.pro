@@ -5,12 +5,12 @@
 # with boost and sensoray.
 #
 # For testing/experimentation uncomment (remove #) these lines (and run qmake)...
-TEMPLATE = app
-SOURCES += src/main.cpp
+#TEMPLATE = app
+#SOURCES += src/main.cpp
 
 # ...and comment these lines out:
-#TEMPLATE = lib
-#CONFIG += dynamiclib
+TEMPLATE = lib
+CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
 #CONFIG += staticlib
