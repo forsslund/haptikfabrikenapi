@@ -43,14 +43,17 @@ public:
     void server(boost::asio::io_service& io_service, unsigned short port);
     virtual ~FsHapticDeviceThread() {}
     virtual void thread();
+    void event_thread();
     virtual void close(){
         std::cout << "FsHapticDeviceThread close()\n";
         running=false;
         m_thread->join();
+        m_event_thread->join();
     }
     virtual int open() {
         running=true;
         m_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::thread, this));
+        m_event_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::event_thread, this));
         return 0;
     }
     virtual std::string getErrorCode() { return std::string("Something went wrong"); }
@@ -88,6 +91,12 @@ public:
         for(int i=0;i<6;++i)
             a[i]=latestEnc[i];
         mtx_pos.unlock();
+    }
+    inline fsVec3d getCurrentForce(){
+        mtx_pos.lock();
+        fsVec3d f = currentForce;
+        mtx_pos.unlock();
+        return f;
     }
     inline fsVec3d getBodyAngles(){
         mtx_pos.lock();
@@ -260,6 +269,9 @@ public:
 
 
     boost::thread* m_thread = nullptr;
+    boost::thread* m_event_thread = nullptr;
+
+    std::vector<HapticListener*> listeners;
 
 
 

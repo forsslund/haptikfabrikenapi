@@ -386,12 +386,41 @@ public:
 std::string toJSON(const Kinematics::configuration& c);
 Kinematics::configuration fromJSON(std::string json);
 
-
-
-
-
+// Forward declare
 class FsHapticDeviceThread;
+class HaptikfabrikenInterface;
 
+// Haptic values as passed to event handlers
+struct HapticValues {
+    fsVec3d position;
+    fsMatrix3 orientation;
+    fsVec3d currentForce;
+    HaptikfabrikenInterface* hfab; // For e.g. setForce();
+};
+
+/*
+ *  Class for haptic event listener
+ *  Example:
+ *    class MyClass : public HapticListener {
+ *           positionEvent(HapticValues hv){
+ *               fsVec3d f = -100 * hv.position;
+ *               hfab->setForce(f);
+ *           }
+ *
+ *           MyClass(){
+ *               HaptikfabrikenInterface* hfab = new HaptikfabrikenInterface();
+ *               hfab->open();
+ *               hfab->addEventListener(this);
+ *           }
+ *    }
+ *
+ */
+class HapticListener {
+public:
+    virtual void positionEvent(HapticValues) = 0;
+    virtual ~HapticListener(){}
+    int maxFrequency{4000};
+};
 
 class HaptikfabrikenInterface {
 public:
@@ -425,6 +454,8 @@ public:
 
     void calibrate();              // Sets encoders (or offset if read-only, e.g. usb)
                                    // to the defined values in kinematic model as home position.
+
+    void addEventListener(HapticListener* listener);
 
     const Kinematics::configuration kinematicModel;
 

@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <boost/thread/thread.hpp>
 
 haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_next_message,
        haptikfabriken::Kinematics::configuration c, Protocol protocol):kinematicModel(c),fsthread(nullptr)
@@ -112,6 +113,11 @@ std::bitset<5> haptikfabriken::HaptikfabrikenInterface::getSwitchesState()
 void haptikfabriken::HaptikfabrikenInterface::calibrate()
 {
     fsthread->calibrate();
+}
+
+void haptikfabriken::HaptikfabrikenInterface::addEventListener(haptikfabriken::HapticListener *listener)
+{
+    fsthread->listeners.push_back(listener);
 }
 
 std::string haptikfabriken::toString(const haptikfabriken::fsVec3d &r)

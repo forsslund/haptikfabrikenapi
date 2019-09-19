@@ -9,9 +9,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
-#include <boost/chrono.hpp>
 #include <string>
 
+#include <chrono>
+#include <thread>
 
 namespace haptikfabriken {
 
@@ -237,6 +238,51 @@ void FsHapticDeviceThread::thread()
   catch (std::exception& e){
     std::cerr << "Exception in FsHapticDeviceThread::thread(): " << e.what() << "\n";
   }
+
+}
+
+void FsHapticDeviceThread::event_thread()
+{
+
+    using namespace std::chrono;
+    std::chrono::duration<int, std::micro> microsecond{1};
+    high_resolution_clock::time_point t1,t2;
+
+    t1 = high_resolution_clock::now();
+
+    while(running){
+        HapticValues hv;
+        hv.position = getPos(true);
+
+        bool readyContinue=false;
+        while(!readyContinue){
+            t2 = high_resolution_clock::now();
+            duration<double> dt = duration_cast<duration<double>>(t2 - t1);
+
+            if(listeners.size() == 0){
+                this_thread::sleep_for(1000*microsecond);
+                continue; // Wait for added listener
+            }
+
+            for(auto listener : listeners){
+                // Ready to call? (1/time since last time > hz)
+                if(dt.count() > (1.0/listener->maxFrequency)){
+                    hv.position = getPos();
+                    hv.orientation = getRot();
+                    hv.currentForce = getCurrentForce();
+
+                    listener->positionEvent(hv);
+                    readyContinue=true;
+                }
+            }
+
+            // Add a tiny sleep if maxFrequency not reached
+            if(!readyContinue){
+                this_thread::sleep_for(10*microsecond); //100khz max
+            }
+        }
+        t1=t2;
+    }
 
 }
 
