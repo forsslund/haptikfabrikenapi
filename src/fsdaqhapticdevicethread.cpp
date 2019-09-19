@@ -196,7 +196,7 @@ void FsDAQHapticDeviceThread::thread()
         // Limit to maxium amps and check that it is within interval
         double small=0.001;
         // First axis on Polhem v2 is limited to 1.5 amps since it is so intensly powerful
-        const bool polhemv2 = kinematics.m_config.variant==3;
+        const bool polhemv2 = false;// NORMAL MOTOR NOW kinematics.m_config.variant==3;
         const double maxamps_first_axis = polhemv2? 1.5-small : max_milliamps*0.001-small;
         const double maxamps[] = {maxamps_first_axis, max_milliamps*0.001-small,max_milliamps*0.001-small};
         double a[3] = {amps.m_x,amps.m_y,amps.m_z};           
