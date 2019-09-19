@@ -88,6 +88,11 @@ haptikfabriken::fsRot haptikfabriken::HaptikfabrikenInterface::getRot()
     return fsthread->getRot();
 }
 
+haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getCurrentForce()
+{
+    return fsthread->getCurrentForce();
+}
+
 void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f)
 {
     // Limit to 5N
@@ -117,7 +122,12 @@ void haptikfabriken::HaptikfabrikenInterface::calibrate()
 
 void haptikfabriken::HaptikfabrikenInterface::addEventListener(haptikfabriken::HapticListener *listener)
 {
-    fsthread->listeners.push_back(listener);
+    fsthread->addEventListener(listener);
+}
+
+void haptikfabriken::HaptikfabrikenInterface::removeEventListener(haptikfabriken::HapticListener *listener)
+{
+    fsthread->removeEventListener(listener);
 }
 
 std::string haptikfabriken::toString(const haptikfabriken::fsVec3d &r)

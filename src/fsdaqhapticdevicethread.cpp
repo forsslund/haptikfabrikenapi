@@ -167,6 +167,8 @@ void FsDAQHapticDeviceThread::thread()
         mtx_pos.unlock();
 
 
+        // Inform blocking calls to getPos() that we now have a new position
+        sem_getpos.post();
 
 
 
@@ -270,8 +272,10 @@ void FsDAQHapticDeviceThread::close()
     S826_WatchdogEnableWrite(0,0);
     S826_SafeWrenWrite(0,S826_SAFEN_SWD);
 
+    cout << "0...\n";
 
     FsHapticDeviceThread::close();
+    cout << "1...\n";
     for(int ix=0;ix<5;++ix){
         S826_CounterWaitCancel(0,ix);
         if(m_ixthread[ix]){
@@ -279,6 +283,7 @@ void FsDAQHapticDeviceThread::close()
             delete m_ixthread[ix];
         }
     }
+    cout << "2...\n";
 
     if(w)
         delete w;

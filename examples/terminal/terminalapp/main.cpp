@@ -40,6 +40,24 @@ int _kbhit() {
 #include <conio.h>
 #endif
 
+
+
+/*
+ *
+ *  Haptic Listner example
+ *
+ */
+class MyHapticListener : public HapticListener {
+       void positionEvent(HapticValues& hv){
+           fsVec3d f = -100 * hv.position;
+           //std::cout << "Pos: " << toString(hv.position) << "\n";
+
+           hv.nextForce = f;
+       }
+};
+
+
+
 int main()
 {
     cout << "Welcome to Haptikfabriken API!\nPress any key to close." << endl;
@@ -57,8 +75,8 @@ int main()
     bool wait_for_next_message = false;
 
     // Create haptics communication thread.
-    //HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::DAQ);
-    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
+    HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::DAQ);
+    //HaptikfabrikenInterface hfab(wait_for_next_message, c, HaptikfabrikenInterface::USB);
 
     // Optionally set max millimaps according to your escons (default 2000). Might need to set in firmware too.
     hfab.max_milliamps = 4000;
@@ -66,11 +84,39 @@ int main()
     // Open the communcication
     hfab.open();
 
+
+
+
+
+
+    // Add our listener
+    MyHapticListener* myHapticListener = new MyHapticListener;
+    hfab.addEventListener(myHapticListener);
+
+    // Main loop
+    bool running=true;
+    while(running){
+        if(_kbhit()) running=false;
+        // Just wait for keyboard hit
+        this_thread::sleep_for(std::chrono::microseconds(1000));
+    }
+
+    // Remove listener
+    hfab.removeEventListener(myHapticListener);
+    delete myHapticListener;
+    myHapticListener = nullptr;
+
+
+
+
+
+
+
+
+
+#ifdef DIRECT_RENDERING_LOOP
     // Verbose or not (set to at least 1 to show debug messages)
     int verbose=0;
-
-    // Main loop doing some haptic rendering
-    bool running=true;
 
 
     double dir=1;
@@ -186,9 +232,10 @@ int main()
         // Sleep e.g. 1ms = 1000us
         //this_thread::sleep_for(std::chrono::microseconds(1000));
     }
-
+#endif
 
     hfab.close();
+    std::cout << "Closing from main.\n";
 
     //char cc;
     //std::cin >> cc;

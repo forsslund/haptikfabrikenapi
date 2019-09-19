@@ -395,7 +395,7 @@ struct HapticValues {
     fsVec3d position;
     fsMatrix3 orientation;
     fsVec3d currentForce;
-    HaptikfabrikenInterface* hfab; // For e.g. setForce();
+    fsVec3d nextForce; // Will be output to device
 };
 
 /*
@@ -417,9 +417,9 @@ struct HapticValues {
  */
 class HapticListener {
 public:
-    virtual void positionEvent(HapticValues) = 0;
+    virtual void positionEvent(HapticValues&) = 0;
     virtual ~HapticListener(){}
-    int maxFrequency{4000};
+    int maxHapticListenerFrequency{15000};
 };
 
 class HaptikfabrikenInterface {
@@ -448,6 +448,7 @@ public:
 
     fsVec3d getPos(bool blocking=false);              // Get cartesian coords xyz using kineamtics model
     fsRot getRot();                // Get orientaion of manipulandum
+    fsVec3d getCurrentForce();              // Get last applied force
     void setForce(fsVec3d f);      // Set force using kineamtics model, e.g. in xyz
     void setCurrent(fsVec3d amps); // Set the 3 motor amps directly (not cartesian coords.)
     std::bitset<5> getSwitchesState();
@@ -456,6 +457,7 @@ public:
                                    // to the defined values in kinematic model as home position.
 
     void addEventListener(HapticListener* listener);
+    void removeEventListener(HapticListener* listener);
 
     const Kinematics::configuration kinematicModel;
 

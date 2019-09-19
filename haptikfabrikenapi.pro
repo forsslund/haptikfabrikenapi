@@ -30,7 +30,6 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-
 TARGET = haptikfabrikenapi
 linux: target.path = /usr/local/lib
 win32: target.path = c:/chai3d/external/haptikfabrikenapi

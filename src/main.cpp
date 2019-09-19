@@ -51,6 +51,17 @@ using namespace std::chrono;
 duration<int, std::micro> hundred_milliseconds{100000};
 duration<int, std::micro> one_millisecond{1000};
 
+/*
+ *
+ *  Haptic Listner example
+ *
+ */
+class MyHapticListener : public HapticListener {
+       void positionEvent(HapticValues& hv){
+           fsVec3d f = -100 * hv.position;
+           hv.nextForce = f;
+       }
+};
 
 
 int main()
@@ -70,6 +81,43 @@ int main()
 
 
 
+
+
+
+
+
+
+
+
+
+
+    // Add our listener
+    MyHapticListener* myHapticListener = new MyHapticListener();
+    hi.addEventListener(myHapticListener);
+
+    // Main loop
+    bool running=true;
+    while(running){
+        if(_kbhit()) running=false;
+
+        //std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << "\n";
+
+        // Just wait for keyboard hit
+        this_thread::sleep_for(std::chrono::microseconds(100000)); // 100ms
+    }
+
+    // Remove listener
+    hi.removeEventListener(myHapticListener);
+    delete myHapticListener;
+    myHapticListener = nullptr;
+    hi.close();
+
+    return 0;
+
+
+
+
+
     int printcount = 100;
 
     double t=0;
@@ -83,6 +131,9 @@ int main()
             std::cin >> cc;
             active_phase=false;
         }
+
+        continue;
+
         fsVec3d v = hi.getPos();
         int e[6];
         hi.getEnc(e);

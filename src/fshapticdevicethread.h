@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <fstream>
 #include <bitset>
+#include <set>
 
 #include "kinematics.h"
 //#include <chai3d.h>
@@ -48,10 +49,12 @@ public:
         std::cout << "FsHapticDeviceThread close()\n";
         running=false;
         m_thread->join();
+        sem_getpos.post(); // unlock potential block in event thread.
         m_event_thread->join();
     }
     virtual int open() {
         running=true;
+        std::cout << "Open in fshapticdevicetherad\n";
         m_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::thread, this));
         m_event_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::event_thread, this));
         return 0;
@@ -59,6 +62,8 @@ public:
     virtual std::string getErrorCode() { return std::string("Something went wrong"); }
 
     boost::interprocess::interprocess_semaphore sem_force_sent;
+    boost::interprocess::interprocess_semaphore sem_getpos;
+
     bool newforce;
     const bool wait_for_next_message;
     Kinematics kinematics;
@@ -83,8 +88,17 @@ public:
 
     boost::mutex mtx_pos;
     boost::mutex mtx_force;
-    boost::interprocess::interprocess_semaphore sem_getpos;
-    boost::interprocess::interprocess_semaphore sem_setforce;
+
+    void addEventListener(HapticListener* listener){
+        listener_mutex.lock();
+        listeners.insert(listener);
+        listener_mutex.unlock();
+    }
+    void removeEventListener(HapticListener* listener){
+        listener_mutex.lock();
+        listeners.erase(listener);
+        listener_mutex.unlock();
+    }
 
     inline void getEnc(int a[]){
         mtx_pos.lock();
@@ -271,7 +285,8 @@ public:
     boost::thread* m_thread = nullptr;
     boost::thread* m_event_thread = nullptr;
 
-    std::vector<HapticListener*> listeners;
+    std::set<HapticListener*> listeners;
+    boost::mutex listener_mutex;
 
 
 

@@ -216,7 +216,7 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
 }
 
 FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message, Kinematics::configuration c):
-    sem_force_sent(0),sem_getpos(0), sem_setforce(0), newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
+    sem_force_sent(0),sem_getpos(0), newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
 {
     std::cout << "FsHapticDeviceThread::FsHapticDeviceThread()\n";
     app_start = chrono::steady_clock::now();
@@ -243,38 +243,74 @@ void FsHapticDeviceThread::thread()
 
 void FsHapticDeviceThread::event_thread()
 {
-
     using namespace std::chrono;
     std::chrono::duration<int, std::micro> microsecond{1};
     high_resolution_clock::time_point t1,t2;
 
     t1 = high_resolution_clock::now();
 
+    high_resolution_clock::time_point listeners_t1,listeners_t2;
+    high_resolution_clock::time_point total_t1,total_t2;
+    double listeners_dt=0;
+    int listeners_count=0;
+
+    total_t1=high_resolution_clock::now();
+
     while(running){
         HapticValues hv;
         hv.position = getPos(true);
-
         bool readyContinue=false;
-        while(!readyContinue){
+        while(!readyContinue && running){
             t2 = high_resolution_clock::now();
             duration<double> dt = duration_cast<duration<double>>(t2 - t1);
-
             if(listeners.size() == 0){
                 this_thread::sleep_for(1000*microsecond);
                 continue; // Wait for added listener
             }
 
+            listener_mutex.lock();
+
             for(auto listener : listeners){
                 // Ready to call? (1/time since last time > hz)
-                if(dt.count() > (1.0/listener->maxFrequency)){
+                if(dt.count() > (1.0/listener->maxHapticListenerFrequency)){
                     hv.position = getPos();
                     hv.orientation = getRot();
                     hv.currentForce = getCurrentForce();
+                    hv.nextForce = currentForce;
+
+                    // stats
+                    listeners_count++;
+                    listeners_t1=high_resolution_clock::now();
+
 
                     listener->positionEvent(hv);
+
+                    // stats cont.
+                    listeners_t2=high_resolution_clock::now();
+                    duration<double> time_span = duration_cast<duration<double>>(listeners_t2 - listeners_t1);
+                    listeners_dt += time_span.count();
+
+                    setForce(hv.nextForce);
+
                     readyContinue=true;
                 }
             }
+            listener_mutex.unlock();
+
+            if(listeners_count==100000){
+                total_t2=high_resolution_clock::now();
+                duration<double> total_time_span = duration_cast<duration<double>>(total_t2 - total_t1);
+
+                std::cout << "\nCalled positionEvent() " << listeners_count
+                          << " times in " << total_time_span.count()
+                          << " s (" << listeners_count/total_time_span.count() << " hz) "
+                          << " with avarage execution time of " << listeners_count*listeners_dt/listeners_count << " ms\n\n";
+                listeners_count = 0;
+                listeners_dt=0;
+                total_t1 = total_t2=high_resolution_clock::now();;
+            }
+
+
 
             // Add a tiny sleep if maxFrequency not reached
             if(!readyContinue){
