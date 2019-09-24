@@ -290,7 +290,7 @@ void FsHapticDeviceThread::event_thread()
                     duration<double> time_span = duration_cast<duration<double>>(listeners_t2 - listeners_t1);
                     listeners_dt += time_span.count();
 
-                    setForce(hv.nextForce);
+                    setForce(hv.nextForce*2.5); // 2.5x800 = 2000 stiffness
 
                     readyContinue=true;
                 }

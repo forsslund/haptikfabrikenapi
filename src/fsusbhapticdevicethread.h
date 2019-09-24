@@ -43,9 +43,6 @@ public:
     void thread();
     void close();
     int open();
-#ifdef SERIAL_READ
-    void usb_serial_thread();
-#endif
 
     ~FsUSBHapticDeviceThread(){
         std::cout << "Fsusb desctructor\n";
@@ -64,6 +61,7 @@ private:
 
 
 #ifdef SERIAL_READ
+    void usb_serial_thread();
     boost::thread* m_thread_usb_serial = 0;
     boost::mutex mtx_serial_data;
     int serial_data_received = 0;

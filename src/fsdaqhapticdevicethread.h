@@ -6,6 +6,7 @@
 
 namespace haptikfabriken {
 
+#define SERIAL_READ
 
 
 class FsDAQHapticDeviceThread : public FsHapticDeviceThread
@@ -35,6 +36,15 @@ private:
 
 
     int speedcheck_enc[3];
+
+#ifdef SERIAL_READ
+    void usb_serial_thread();
+    boost::thread* m_thread_usb_serial = 0;
+    boost::mutex mtx_serial_data;
+    int serial_data_received = 0;
+    short serial_data;
+#endif
+
 
 
 };
