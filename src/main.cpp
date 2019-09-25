@@ -71,7 +71,7 @@ int main()
 
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::polhem_v3(),
-                               HaptikfabrikenInterface::DAQ);
+                               HaptikfabrikenInterface::USB);
     hi.open();
 
 
@@ -132,7 +132,7 @@ int main()
             active_phase=false;
         }
 
-        continue;
+        //continue;
 
         fsVec3d v = hi.getPos();
         int e[6];
@@ -178,7 +178,7 @@ printcount = 100;
         }
 
 
-        std::this_thread::sleep_for(400*one_millisecond);
+        std::this_thread::sleep_for(1*one_millisecond);
         current=!current;
     }
 

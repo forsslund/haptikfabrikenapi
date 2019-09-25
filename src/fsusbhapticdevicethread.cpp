@@ -66,6 +66,10 @@ void FsUSBHapticDeviceThread::thread()
         std::cout << "unable to open device. Is it plugged in and you run with right permission (or as root?)\n";
         return;
     }
+    std::cout << "\n************************************\n";
+    std::cout <<   "*  Welcome to HaptikfabrikenFsUSB! *\n";
+    std::cout <<   "*  Build: " << __DATE__ << " " __TIME__ << "     *\n";
+    std::cout <<   "************************************\n\n";
     std::cout << "Opened USB Connection" << std::endl;
 
     tell_hid_to_calibrate = false;
@@ -83,17 +87,21 @@ void FsUSBHapticDeviceThread::thread()
 
     high_resolution_clock::time_point t1,t2;
 
-
+    bool use_serial_for_enc5 = false;
     while(running){
         t1 = high_resolution_clock::now();
 
         int receive_count_this_loop = 0;
 
-
+        int enc5_serial=0;
 #ifdef SERIAL_READ
         mtx_serial_data.lock();
-        hid_to_pc.encoder_d = serial_data;
-        receive_count_this_loop = serial_data_received;
+        enc5_serial = serial_data;
+        //receive_count_this_loop = serial_data_received;
+        if(!use_serial_for_enc5 && serial_data_received>0){
+            use_serial_for_enc5=true;
+            std::cout << "Got serial data " << serial_data << "\n";
+        }
         serial_data_received=0;
         mtx_serial_data.unlock();
 #endif
@@ -151,7 +159,8 @@ void FsUSBHapticDeviceThread::thread()
         // If encoder set by webserv, use that instead
         if(w->activeEnc5())
             hid_to_pc.encoder_d = short(w->getEnc5());
-
+        else if(use_serial_for_enc5)
+            hid_to_pc.encoder_d = enc5_serial;
 
         // *************** COMPUTE POSITION ***********
         // Compute position
@@ -224,6 +233,8 @@ void FsUSBHapticDeviceThread::thread()
         pc_to_hid.current_motor_a_mA = short(amps.x()*1000.0);
         pc_to_hid.current_motor_b_mA = short(amps.y()*1000.0);
         pc_to_hid.current_motor_c_mA = short(amps.z()*1000.0);
+
+        max_milliamps=750;
 
         // Cap at 2A since Escons 24/4 cant do more than that for 4s
         if(pc_to_hid.current_motor_a_mA >= max_milliamps) pc_to_hid.current_motor_a_mA = max_milliamps-1;
@@ -321,7 +332,9 @@ int FsUSBHapticDeviceThread::open()
 void FsUSBHapticDeviceThread::usb_serial_thread()
 {
 
-    int serial_port = ::open("/dev/ttyACM0", O_RDWR);
+    std::cout << "Opening /dev/ttyUSB0\n";
+
+    int serial_port = ::open("/dev/ttyUSB0", O_RDWR);
     char read_buf [100];
 
 
@@ -358,8 +371,8 @@ void FsUSBHapticDeviceThread::usb_serial_thread()
     tty.c_cc[VMIN] = 0;
 
     // Set in/out baud rate to be 9600
-    cfsetispeed(&tty, B115200);
-    cfsetospeed(&tty, B115200);
+    cfsetispeed(&tty, B9600);
+    cfsetospeed(&tty, B9600);
 
     // Save tty settings, also checking for error
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
@@ -368,6 +381,7 @@ void FsUSBHapticDeviceThread::usb_serial_thread()
 
 
 
+    string s;
     while (running) {
         memset(&read_buf, '\0', sizeof(read_buf));
 
@@ -379,17 +393,27 @@ void FsUSBHapticDeviceThread::usb_serial_thread()
         }
         if (num_bytes == 0) continue;
         //cout << "read: " << read_buf << "\n";
+        s+=read_buf[0];
+        if(read_buf[0]=='\n'){
+
+
+            //stringstream in(read_buf);
+            mtx_serial_data.lock();
+            sscanf(s.c_str(),"%hd",&serial_data);
+            //receive_count_this_loop++;
+            serial_data_received++;
+            mtx_serial_data.unlock();
+            s="";
+
+            //cout << "got: [" << s << "]" << serial_data<< "\n";
+
+
+        }
 
         if(num_bytes>14)
             printf("Read %i bytes. Received message: %s", num_bytes, read_buf);
 
 
-        //stringstream in(read_buf);
-        mtx_serial_data.lock();
-        sscanf(read_buf,"%hd",&serial_data);
-        //receive_count_this_loop++;
-        serial_data_received++;
-        mtx_serial_data.unlock();
 
 
 

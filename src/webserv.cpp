@@ -169,7 +169,7 @@ int Webserv::getEnc5()
 bool Webserv::activeEnc5()
 {
     using namespace chrono;
-    high_resolution_clock::time_point t2;
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(t2 - lastEnc5message);
 
     // True if we got a message within the last second

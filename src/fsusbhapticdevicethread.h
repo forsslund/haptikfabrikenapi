@@ -4,9 +4,8 @@
 #include "fshapticdevicethread.h"
 #include "webserv.h"
 
-// Uncomment to use the second usb port for sending serial data.
-// No improvement shown however. For experimentation only.
-//#define SERIAL_READ
+// Uncomment to receive final axis data over serial (another controller)
+#define SERIAL_READ
 
 namespace haptikfabriken {
 

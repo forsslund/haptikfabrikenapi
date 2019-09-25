@@ -290,14 +290,14 @@ void FsHapticDeviceThread::event_thread()
                     duration<double> time_span = duration_cast<duration<double>>(listeners_t2 - listeners_t1);
                     listeners_dt += time_span.count();
 
-                    setForce(hv.nextForce*2.5); // 2.5x800 = 2000 stiffness
-
+                    double gain = 0.5;
+                    setForce(gain*hv.nextForce);
                     readyContinue=true;
                 }
             }
             listener_mutex.unlock();
 
-            if(listeners_count==100000){
+            if(listeners_count==10000){
                 total_t2=high_resolution_clock::now();
                 duration<double> total_time_span = duration_cast<duration<double>>(total_t2 - total_t1);
 
