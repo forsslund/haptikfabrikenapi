@@ -24,6 +24,7 @@
 #include <boost/chrono.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
+#include <thread>
 
 namespace  haptikfabriken {
 
@@ -88,6 +89,8 @@ public:
 
     boost::mutex mtx_pos;
     boost::mutex mtx_force;
+    boost::mutex mtx_getpos;
+    int num_getpos{0};
 
     void addEventListener(HapticListener* listener){
         listener_mutex.lock();
@@ -140,9 +143,16 @@ public:
     }
 
     inline fsVec3d getPos(bool blocking=false) {
+        //blocking=false;
         if(blocking){
-            sem_getpos.wait();
-            while(sem_getpos.try_wait());
+            //sem_getpos.wait();
+            //while(sem_getpos.try_wait());
+            while(num_getpos==0 && running){
+                using namespace std::chrono;
+                std::chrono::duration<int, std::micro> microsecond{1};
+                this_thread::sleep_for(100*microsecond);
+            }
+            num_getpos=0;
         }
         mtx_pos.lock();
         fsVec3d p = latestPos;

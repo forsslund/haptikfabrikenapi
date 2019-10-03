@@ -291,6 +291,7 @@ void FsDAQHapticDeviceThread::thread()
 
 void FsDAQHapticDeviceThread::close()
 {
+    FsHapticDeviceThread::close();
     cout << "Quitting FsDAQ...\n";
     //close
     // Disable power
@@ -307,7 +308,6 @@ void FsDAQHapticDeviceThread::close()
 
     cout << "0...\n";
 
-    FsHapticDeviceThread::close();
     cout << "1...\n";
     for(int ix=0;ix<5;++ix){
         S826_CounterWaitCancel(0,ix);

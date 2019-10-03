@@ -109,7 +109,6 @@ void FsUSBHapticDeviceThread::thread()
         // **************** RECEIVE ***************
         for(int i=0;i<in_bytes;++i) in_buf[i]=0;
         int res=0;
-
         // Wait here for message
         hid_set_nonblocking(handle, 0);
         res = hid_read_timeout(handle, in_buf, in_bytes, 10);
@@ -201,12 +200,13 @@ void FsUSBHapticDeviceThread::thread()
         }
 
 
-        firstMessage=true;
 
 
 
         // Inform blocking calls to getPos() that we now have a new position
-        sem_getpos.post();
+        //sem_getpos.post();
+        num_getpos++;
+        firstMessage=true;
 
         //sem_setforce.wait();
         //while(sem_setforce.try_wait());
@@ -234,7 +234,6 @@ void FsUSBHapticDeviceThread::thread()
         pc_to_hid.current_motor_b_mA = short(amps.y()*1000.0);
         pc_to_hid.current_motor_c_mA = short(amps.z()*1000.0);
 
-        max_milliamps=750;
 
         // Cap at 2A since Escons 24/4 cant do more than that for 4s
         if(pc_to_hid.current_motor_a_mA >= max_milliamps) pc_to_hid.current_motor_a_mA = max_milliamps-1;
@@ -319,10 +318,12 @@ void FsUSBHapticDeviceThread::close()
 
 int FsUSBHapticDeviceThread::open()
 {
+    std::chrono::duration<int, std::micro> microsecond{1};
+    this_thread::sleep_for(100000*microsecond);
+
     // Start normal thread
     FsHapticDeviceThread::open();
 
-    std::chrono::duration<int, std::micro> microsecond{1};
     while(!firstMessage) this_thread::sleep_for(1000*microsecond);
 
     return 0;
