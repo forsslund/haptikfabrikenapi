@@ -5,7 +5,7 @@
 #include "webserv.h"
 
 // Uncomment to receive final axis data over serial (another controller)
-#define SERIAL_READ
+//#define SERIAL_READ
 
 namespace haptikfabriken {
 
@@ -19,6 +19,16 @@ struct hid_to_pc_message { // 7*2 = 14 bytes
     short encoder_e;
     short encoder_f;
     short info;
+    hid_to_pc_message(){}
+    hid_to_pc_message(char *c){fromChars(c);}
+    int toChars(char *c){
+        return sprintf(c,"%hd %hd %hd %hd %hd %hd %hd\n",encoder_a,encoder_b,encoder_c,
+                                         encoder_d,encoder_e,encoder_f, info);
+    }
+    void fromChars(const char *c){
+        sscanf_s(c,"%hd %hd %hd %hd %hd %hd %hd",&encoder_a,&encoder_b,&encoder_c,
+                                          &encoder_d,&encoder_e,&encoder_f, &info);
+    }
 };
 
 struct pc_to_hid_message {  // 7*2 = 14 bytes + 1 inital byte always 0
@@ -30,8 +40,19 @@ struct pc_to_hid_message {  // 7*2 = 14 bytes + 1 inital byte always 0
     short command_attr0;
     short command_attr1;
     short command_attr2;
+    pc_to_hid_message(){}
+    pc_to_hid_message(const char *c){fromChars(c);}
+    int toChars(char *c){
+        return sprintf(c,"%hd %hd %hd %hd %hd %hd %hd\n",current_motor_a_mA,current_motor_b_mA,
+              current_motor_c_mA, command,command_attr0,command_attr1, command_attr2);
+    }
+    void fromChars(const char *c){
+        sscanf_s(c,"%hd %hd %hd %hd %hd %hd %hd", &current_motor_a_mA,&current_motor_b_mA,
+              &current_motor_c_mA, &command,&command_attr0,&command_attr1, &command_attr2);
+    }
 };
 #pragma pack(pop)
+
 
 class FsUSBHapticDeviceThread : public FsHapticDeviceThread
 {

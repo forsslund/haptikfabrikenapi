@@ -6,7 +6,7 @@
 
 namespace haptikfabriken {
 
-#define SERIAL_READ
+//#define SERIAL_READ
 
 
 class FsDAQHapticDeviceThread : public FsHapticDeviceThread
