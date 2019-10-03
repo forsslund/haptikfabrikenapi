@@ -61,25 +61,20 @@ DigitalOut myled2(LED2);
 DigitalOut myled3(LED3);
 DigitalOut myled4(LED4);
 
-// Escon communication (pwm, direction, enable)
+// Escon communication (pwm, enable) 
+// Yipee no direction pin anymore!
 DigitalOut enableEscons(p27,0); 
 PwmOut pwm[3]={p21,p22,p23};
-DigitalOut direction[3]={p24,p25,p26};
 void escon_timeout() {
     enableEscons = 0;
     for(int i=0;i<3;i++)
-        pwm[i].write(0.1); //10% means 0
+        pwm[i].write(0.5); //50% means 0
 }
-Timeout directionTimeout[3];
-bool capAmps[] = {false,false,false};
-void tempCapTimeout0() { capAmps[0]=false; }
-void tempCapTimeout1() { capAmps[1]=false; }
-void tempCapTimeout2() { capAmps[2]=false; }
 
 // Button/switches (used for calibration request)
 InterruptIn  ix0_button(p28);
 bool ix0_button_flag = false;
-void callback_ix0_button_fall(void) { ix0_button_flag = true; }
+void callback_ix0_button_fall(void) { ix0_button_flag = true; myled4=1;}
 
 // Encoders pins
 InterruptIn  encoder0_A(p5);
@@ -164,16 +159,11 @@ int main(void) {
     myled2 = 1;
     myled3 = 1;
     myled4 = 1;
-    direction[0]=1;  
-    direction[1]=1;  
-    direction[2]=1;     
     wait_ms(500);     
     myled1 = 0;
     myled2 = 0;
     myled3 = 0;
-    direction[0]=0;  
-    direction[1]=0;  
-    direction[2]=0;  
+    myled4 = 0;
     wait_ms(500); 
        
     // Setup everything
@@ -213,13 +203,9 @@ int main(void) {
 
     enableEscons = 0;
     
-    int dir_previous[3];
-     
     for(int i=0;i<3;i++){
-        pwm[i].period_us(500);
-        pwm[i].write(0.1);  
-        direction[i]=0;
-        dir_previous[i]=0;
+        pwm[i].period_us(500); // 500=2khz, 250=4khz
+        pwm[i].write(0.5);  
     }
            
     send_report.length = bytes_out; 
@@ -278,10 +264,10 @@ int main(void) {
                 pc_to_hid = *reinterpret_cast<pc_to_hid_message*>(dataptr);
                 
                 // If everything is normal, blink (on) every 1s
-                if(++receive_count % 250 == 0)
-                     myled4=!myled4;                     
+                //if(++receive_count % 250 == 0)
+                //     myled4=!myled4;                     
                 
-                float f[] = {0,0,0};
+                double f[] = {0,0,0};
                 
                 // Check for commands
                 if(pc_to_hid.command == 1){
@@ -293,46 +279,16 @@ int main(void) {
                     counter[5] = pc_to_hid.current_motor_c_mA;
                     // flag off switch
                     ix0_button_flag = false;
+                    myled4=0;
                 } else {                                       
-                    f[0] = pc_to_hid.current_motor_a_mA*0.001f;
-                    f[1] = pc_to_hid.current_motor_b_mA*0.001f;
-                    f[2] = pc_to_hid.current_motor_c_mA*0.001f;
+                    f[0] = pc_to_hid.current_motor_a_mA*0.001;
+                    f[1] = pc_to_hid.current_motor_b_mA*0.001;
+                    f[2] = pc_to_hid.current_motor_c_mA*0.001;
                 }
                 
+                const double pwm_90_percent = 3.0; // max amps.
                 for(int i=0;i<3;i++){
-                    int dir = dir_previous[i]; // If mA == 0, keep direction
-                    if(f[i] >  0.0001) dir = 1;
-                    if(f[i] < -0.0001) dir = 0;
-                    float abs_val = f[i]<0? -f[i] : f[i];
-                    
-                    if(dir_previous[i] != dir){
-                        // Set up temporarily cap to 1mA
-                        capAmps[i] = true;
-                        
-                        // Stop capping after 4ms 
-                        directionTimeout[i].detach();
-                        if(i==0)
-                            directionTimeout[i].attach(&tempCapTimeout0,0.004); 
-                        if(i==1)
-                            directionTimeout[i].attach(&tempCapTimeout1,0.004); 
-                        if(i==2)
-                            directionTimeout[i].attach(&tempCapTimeout2,0.004); 
-                        dir_previous[i] = dir;
-                    }
-                    
-                    if(i==0) myled1=dir;
-                    if(i==1) myled2=dir;
-                    if(i==2) myled3=dir;                    
-                    
-                    if(capAmps[i]) abs_val = 0.001;
-                    
-                    // Set direction and pwm
-                    direction[i].write(dir);                    
-                    float pwm_90_percent = i==0? 1.0 : 2.0; // First axis 90%=1A                     
-                    if(abs_val > pwm_90_percent)
-                        pwm[i].write(0.9);
-                    else
-                        pwm[i].write(0.8*abs_val/pwm_90_percent+0.1);
+                    pwm[i].write(0.4*f[i]/pwm_90_percent+0.5);
                 }                
             }                        
         //} else wait_us(100);
