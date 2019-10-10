@@ -9,10 +9,31 @@
  *  Requires this source file, including any modifications,
  *  as well as the attribution mentioned above.
  *
- *  Updated and tested 2019-09-10 by Jonas Forsslund.
+ *  Updated and tested 2019-10-10 by Jonas Forsslund.
  *  jonas@forsslundsystems.com
  *
  */
+ 
+ 
+ // PCB Version
+ #define PCB_WOODENHAPTICS_0_4
+ //#define PCB_POLHEM_V3
+  
+
+//
+// Uncomment to enable 6-DOF input, i.e. gimbal encoders.
+// If you have no encoders connected, leave it comment out or 
+// you may get random readings and it will take a lot of cpu.
+//
+//#define DOF6 
+
+// Set the current which represent max pwm duty cycle. 
+// Reducing this improves the resolution of the current. 
+// SHOULD MATCH the current at 90% in the Escon config used.
+//const float max_current = 6.0f; 
+const float max_current = 3.0f; 
+ 
+ 
 #include "mbed.h"
 #include "USBHID.h"
 #include "FastPWM.h"
@@ -63,7 +84,12 @@ DigitalOut myled4(LED4);
 
 // Escon communication (pwm, enable) 
 // Yipee no direction pin anymore!
+#ifdef PCB_POLHEM_V3
 DigitalOut enableEscons(p27,0); 
+#endif
+#ifdef PCB_WOODENHAPTICS_0_4
+DigitalOut enableEscons(p14,0); 
+#endif
 PwmOut pwm[3]={p21,p22,p23};
 void escon_timeout() {
     enableEscons = 0;
@@ -72,23 +98,37 @@ void escon_timeout() {
 }
 
 // Button/switches (used for calibration request)
-InterruptIn  ix0_button(p28);
+InterruptIn  ix0_button(p28); // "TX" general IO9 on WoodenHaptics 0.4
 bool ix0_button_flag = false;
 void callback_ix0_button_fall(void) { ix0_button_flag = true; myled4=1;}
 
 // Encoders pins
+#ifdef PCB_POLHEM_V3
 InterruptIn  encoder0_A(p5);
 InterruptIn  encoder0_B(p6);
 InterruptIn  encoder1_A(p10);
 InterruptIn  encoder1_B(p9);
 InterruptIn  encoder2_A(p8);
 InterruptIn  encoder2_B(p7);
+
+#ifdef DOF6
 InterruptIn  encoder3_A(p14);
 InterruptIn  encoder3_B(p13);
 InterruptIn  encoder4_A(p12);
 InterruptIn  encoder4_B(p11);
 InterruptIn  encoder5_A(p29);
 InterruptIn  encoder5_B(p30);
+#endif 
+#endif
+
+#ifdef PCB_WOODENHAPTICS_0_4
+InterruptIn  encoder0_A(p5);
+InterruptIn  encoder0_B(p7);
+InterruptIn  encoder1_A(p8);
+InterruptIn  encoder1_B(p10);
+InterruptIn  encoder2_A(p11);
+InterruptIn  encoder2_B(p13);
+#endif
 
 // Encoder logic
 int prev_state[] = {-1,-1,-1,-1,-1,-1};
@@ -186,6 +226,7 @@ int main(void) {
     encoder2_B.rise(&callback_2_B_rise);
     encoder2_B.fall(&callback_2_B_fall);
     
+#ifdef DOF6
     encoder3_A.rise(&callback_3_A_rise);
     encoder3_A.fall(&callback_3_A_fall);
     encoder3_B.rise(&callback_3_B_rise);
@@ -200,14 +241,14 @@ int main(void) {
     encoder5_A.fall(&callback_5_A_fall);
     encoder5_B.rise(&callback_5_B_rise);
     encoder5_B.fall(&callback_5_B_fall);
+#endif
 
     enableEscons = 0;
     
     for(int i=0;i<3;i++){
-        pwm[i].period_us(500); // 500=2khz, 250=4khz
+        pwm[i].period_us(500); // 500=2khz, 250=4khz 200=5khz
         pwm[i].write(0.5);  
-    }
-           
+    }           
     send_report.length = bytes_out; 
     
     hid_to_pc_message hid_to_pc;
@@ -216,10 +257,7 @@ int main(void) {
     Timer message_timeout;
     message_timeout.start();
     
-    int receive_count=0;
-    
-    while (1) {
-        
+    while (1) {        
         hid_to_pc.encoder_a = counter[0];
         hid_to_pc.encoder_b = counter[1];
         hid_to_pc.encoder_c = counter[2];
@@ -231,67 +269,51 @@ int main(void) {
         unsigned char* out_buf = reinterpret_cast<unsigned char*>(&hid_to_pc);
 
         //Fill the report
-        for (unsigned int i = 0; i < send_report.length; i++) {
+        for (unsigned int i = 0; i < send_report.length; i++)
             send_report.data[i] = out_buf[i];
-        }
         
         // Send the report with HID. Blocking. USB standard dictates that 
         // the host (pc) will regularly retrieve data from device. 
         hid.send(&send_report);      
-        
-        // Optionally, send it with SERIAL
-        // pc.printf("%d\n", roundloop);       
 
         //try to read a msg, timeout after 10x0.1ms 
         hid.read(&recv_report);
-        //for(int tries=10;tries>0;tries--){
-        //if(hid.readNB(&recv_report)) {
             
-            // Make sure we read the latest if multiple messages have been sent
-            while(hid.readNB(&recv_report));
-            //tries=0;
+        // Make sure we read the latest if multiple messages have been sent
+        while(hid.readNB(&recv_report));
 
-            if(recv_report.length == bytes_in){ // It should always be!                
+        if(recv_report.length == bytes_in){ // It should always be!                
 
-                msg_watchdog.detach();
-                msg_watchdog.attach(&escon_timeout,0.5);
-                enableEscons = 1;
+            msg_watchdog.detach();
+            msg_watchdog.attach(&escon_timeout,0.5);
+            enableEscons = 1;
 
-                // Reinterprete the recevied byte array as a pc_to_hid object.
-                // Since recv_report.data is defined as unsigned char we
-                // have to cast to char* to avoid strict aliasing warning.
-                char* dataptr = reinterpret_cast<char*>(recv_report.data);
-                pc_to_hid = *reinterpret_cast<pc_to_hid_message*>(dataptr);
-                
-                // If everything is normal, blink (on) every 1s
-                //if(++receive_count % 250 == 0)
-                //     myled4=!myled4;                     
-                
-                double f[] = {0,0,0};
-                
-                // Check for commands
-                if(pc_to_hid.command == 1){
-                    counter[0] = pc_to_hid.command_attr0;
-                    counter[1] = pc_to_hid.command_attr1;
-                    counter[2] = pc_to_hid.command_attr2;
-                    counter[3] = pc_to_hid.current_motor_a_mA;
-                    counter[4] = pc_to_hid.current_motor_b_mA;
-                    counter[5] = pc_to_hid.current_motor_c_mA;
-                    // flag off switch
-                    ix0_button_flag = false;
-                    myled4=0;
-                } else {                                       
-                    f[0] = pc_to_hid.current_motor_a_mA*0.001;
-                    f[1] = pc_to_hid.current_motor_b_mA*0.001;
-                    f[2] = pc_to_hid.current_motor_c_mA*0.001;
-                }
-                
-                const double pwm_90_percent = 3.0; // max amps.
-                for(int i=0;i<3;i++){
-                    pwm[i].write(0.4*f[i]/pwm_90_percent+0.5);
-                }                
-            }                        
-        //} else wait_us(100);
-        //}
+            // Reinterprete the recevied byte array as a pc_to_hid object.
+            // Since recv_report.data is defined as unsigned char we
+            // have to cast to char* to avoid strict aliasing warning.
+            char* dataptr = reinterpret_cast<char*>(recv_report.data);
+            pc_to_hid = *reinterpret_cast<pc_to_hid_message*>(dataptr);            
+            double f[] = {0,0,0};
+            
+            // Check for commands
+            if(pc_to_hid.command == 1){
+                counter[0] = pc_to_hid.command_attr0;
+                counter[1] = pc_to_hid.command_attr1;
+                counter[2] = pc_to_hid.command_attr2;
+                counter[3] = pc_to_hid.current_motor_a_mA;
+                counter[4] = pc_to_hid.current_motor_b_mA;
+                counter[5] = pc_to_hid.current_motor_c_mA;
+                // flag off switch
+                ix0_button_flag = false;
+                myled4=0;
+            } else {                                       
+                f[0] = pc_to_hid.current_motor_a_mA*0.001;
+                f[1] = pc_to_hid.current_motor_b_mA*0.001;
+                f[2] = pc_to_hid.current_motor_c_mA*0.001;
+            }
+            
+            for(int i=0;i<3;i++)
+                pwm[i].write(0.4*f[i]/max_current+0.5);                            
+        }                        
     }
 }
