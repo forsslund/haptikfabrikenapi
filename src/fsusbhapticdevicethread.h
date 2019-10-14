@@ -3,9 +3,10 @@
 
 #include "fshapticdevicethread.h"
 #include "webserv.h"
+#include <stdio.h> // for sscanf
 
 // Uncomment to receive final axis data over serial (another controller)
-//#define SERIAL_READ
+#define SERIAL_READ
 
 namespace haptikfabriken {
 
@@ -26,7 +27,7 @@ struct hid_to_pc_message { // 7*2 = 14 bytes
                                          encoder_d,encoder_e,encoder_f, info);
     }
     void fromChars(const char *c){
-        sscanf_s(c,"%hd %hd %hd %hd %hd %hd %hd",&encoder_a,&encoder_b,&encoder_c,
+        sscanf(c,"%hd %hd %hd %hd %hd %hd %hd",&encoder_a,&encoder_b,&encoder_c,
                                           &encoder_d,&encoder_e,&encoder_f, &info);
     }
 };
@@ -47,7 +48,7 @@ struct pc_to_hid_message {  // 7*2 = 14 bytes + 1 inital byte always 0
               current_motor_c_mA, command,command_attr0,command_attr1, command_attr2);
     }
     void fromChars(const char *c){
-        sscanf_s(c,"%hd %hd %hd %hd %hd %hd %hd", &current_motor_a_mA,&current_motor_b_mA,
+        sscanf(c,"%hd %hd %hd %hd %hd %hd %hd", &current_motor_a_mA,&current_motor_b_mA,
               &current_motor_c_mA, &command,&command_attr0,&command_attr1, &command_attr2);
     }
 };
@@ -74,7 +75,7 @@ public:
 private:
     int raw_enc[6];
 
-    bool tell_hid_to_calibrate;
+    bool tell_hid_to_calibrate{false};
     bool firstMessage{false};
 
     Webserv* w;
@@ -85,7 +86,7 @@ private:
     boost::thread* m_thread_usb_serial = 0;
     boost::mutex mtx_serial_data;
     int serial_data_received = 0;
-    short serial_data;
+    int serial_data;
 #endif
 
 };

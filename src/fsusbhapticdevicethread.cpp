@@ -19,13 +19,14 @@ void usleep(int us){
 }
 #endif
 
-#ifdef SERIAL_READ
+#if defined(SERIAL_READ) || defined(PURE_SERIAL)
 // Linux headers
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
 #endif
+
 
 
 constexpr int WOODENHAPTICS = 1;
@@ -59,6 +60,7 @@ void FsUSBHapticDeviceThread::thread()
     // Set protocol 1=Old usb, 2=April 2018, and for POLHEM
     constexpr int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
 
+#ifndef PURE_SERIAL
     // Open the device using the VID, PID,
     // and optionally the Serial number.
     hid_device *handle = hid_open(0x1234, 0x6, nullptr);
@@ -66,6 +68,8 @@ void FsUSBHapticDeviceThread::thread()
         std::cout << "unable to open device. Is it plugged in and you run with right permission (or as root?)\n";
         return;
     }
+#endif
+
     std::cout << "\n************************************\n";
     std::cout <<   "*  Welcome to HaptikfabrikenFsUSB! *\n";
     std::cout <<   "*  Build: " << __DATE__ << " " __TIME__ << "     *\n";
@@ -87,6 +91,76 @@ void FsUSBHapticDeviceThread::thread()
 
     high_resolution_clock::time_point t1,t2;
 
+
+
+
+#ifdef PURE_SERIAL
+    std::cout << "Opening /dev/ttyACM0\n";
+
+    int serial_port = ::open("/dev/ttyACM0", O_RDWR);
+    char read_buf [100];
+
+
+
+    // Create new termios struc, we call it 'tty' for convention
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+
+    // Read in existing settings, and handle any error
+    if(tcgetattr(serial_port, &tty) != 0) {
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+    }
+/*
+    tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
+    tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
+    tty.c_cflag |= CS8; // 8 bits per byte (most common)
+    tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
+    tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
+
+    tty.c_lflag &= ~ICANON;
+    tty.c_lflag &= ~ECHO; // Disable echo
+    tty.c_lflag &= ~ECHOE; // Disable erasure
+    tty.c_lflag &= ~ECHONL; // Disable new-line echo
+    tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+
+    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+    tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+    // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
+    // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
+
+    tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+    tty.c_cc[VMIN] = 0;
+
+    // Set in/out baud rate to be 9600
+    cfsetispeed(&tty, B115200);
+    cfsetospeed(&tty, B115200);
+
+    // Save tty settings, also checking for error
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+    }
+    */
+    tty.c_cc[VTIME] = 5;    // Wait for up to 0.5s (5 deciseconds), returning as soon as any data is received.
+    tty.c_cc[VMIN] = 0;
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+    }
+
+    char outstr[64];
+#endif
+
+
+
+
+
+
+
+
+
+
+
     bool use_serial_for_enc5 = false;
     while(running){
         t1 = high_resolution_clock::now();
@@ -106,6 +180,29 @@ void FsUSBHapticDeviceThread::thread()
         mtx_serial_data.unlock();
 #endif
 
+
+#ifdef PURE_SERIAL
+
+
+        memset(&read_buf, '\0', sizeof(read_buf));
+
+        int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+        // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
+        if (num_bytes < 0) {
+            std::cout << "Error reading: " <<  errno;
+            continue;
+        }
+        if (num_bytes == 0){
+            pc_to_hid = {};
+            int len = pc_to_hid.toChars(outstr);
+            write(serial_port,outstr,len);
+            this_thread::sleep_for(100*microsecond);
+            std::cout << "initial\n";
+            continue;
+        }
+        //std::cout << read_buf << "\n";
+        hid_to_pc.fromChars(read_buf);
+#else
         // **************** RECEIVE ***************
         for(int i=0;i<in_bytes;++i) in_buf[i]=0;
         int res=0;
@@ -146,13 +243,14 @@ void FsUSBHapticDeviceThread::thread()
         if(receive_count_this_loop>1)
           std::cout << "additional read: " << receive_count_this_loop << " \n";
 
+#endif
+
+
 
         // Check message
         if(hid_to_pc.info == 1){
              std::cout << "Calibration requested from hid! \n";
             tell_hid_to_calibrate = true;
-        } else {
-            tell_hid_to_calibrate = false;
         }
 
         // If encoder set by webserv, use that instead
@@ -160,6 +258,17 @@ void FsUSBHapticDeviceThread::thread()
             hid_to_pc.encoder_d = short(w->getEnc5());
         else if(use_serial_for_enc5)
             hid_to_pc.encoder_d = enc5_serial;
+
+        // Decode button
+        bool btn=false;
+        if(hid_to_pc.encoder_d >5000){
+            hid_to_pc.encoder_d -=10000;
+            btn=true;
+        }
+        mtx_pos.lock();
+        latestSwitchesState[0]=btn;
+        mtx_pos.unlock();
+
 
         // *************** COMPUTE POSITION ***********
         // Compute position
@@ -211,6 +320,8 @@ void FsUSBHapticDeviceThread::thread()
         //sem_setforce.wait();
         //while(sem_setforce.try_wait());
 
+        this_thread::sleep_for(60*microsecond);
+
 
 
         // *************** GET WHAT TO SEND *****        
@@ -254,15 +365,19 @@ void FsUSBHapticDeviceThread::thread()
             pc_to_hid.current_motor_a_mA = short(kinematics.m_config.calibrate_enc_d);
             pc_to_hid.current_motor_b_mA = short(kinematics.m_config.calibrate_enc_e);
             pc_to_hid.current_motor_c_mA = short(kinematics.m_config.calibrate_enc_f);
+            tell_hid_to_calibrate=false;
         }
 
-
+#ifdef PURE_SERIAL
+        int len = pc_to_hid.toChars(outstr);
+        write(serial_port,outstr,len);
+#else
         // **************** SEND ***************
         unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
         res = hid_write(handle,msg_buf,out_bytes);
         if(res!=out_bytes)
             std::cout << "hid_write return " << res << std::endl;
-
+#endif
         t2 = high_resolution_clock::now();
 
         mtx_pos.lock();
@@ -295,6 +410,7 @@ void FsUSBHapticDeviceThread::thread()
         ss << "\"NumSentMessages\": " << num_sent_messages << ",\n";
         ss << "\"NumReceivedMessages\": " << num_received_messages << "\n";
         if(w) w->setMessage(ss.str());
+
     }
 
 
@@ -303,12 +419,14 @@ void FsUSBHapticDeviceThread::thread()
     std::cout << "\n\nIt took me " << time_span.count() << " seconds.\n\n";
 
     //close HID device
+#ifndef PURE_SERIAL
     if(handle){
         hid_close(handle);
         hid_exit();
     }
-
-
+#else
+    ::close(serial_port);
+#endif
 }
 
 void FsUSBHapticDeviceThread::close()
@@ -381,6 +499,10 @@ void FsUSBHapticDeviceThread::usb_serial_thread()
     }
 
 
+    // Stack overflow suggestion ---------
+    sleep(2);
+    tcflush(serial_port,TCIOFLUSH);
+    // -----------------------------------
 
     string s;
     while (running) {
@@ -400,7 +522,7 @@ void FsUSBHapticDeviceThread::usb_serial_thread()
 
             //stringstream in(read_buf);
             mtx_serial_data.lock();
-            sscanf(s.c_str(),"%hd",&serial_data);
+            sscanf(s.c_str(),"%d",&serial_data);
             //receive_count_this_loop++;
             serial_data_received++;
             mtx_serial_data.unlock();

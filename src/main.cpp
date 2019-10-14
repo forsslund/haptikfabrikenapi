@@ -54,6 +54,85 @@ using namespace std::chrono;
 duration<int, std::micro> hundred_milliseconds{100000};
 duration<int, std::micro> one_millisecond{1000};
 
+//#define OVERDRIVE_EXPERIMENT
+//#define LISTENER_EXAMPLE
+#define SIMPLE_EXAMPE
+
+
+
+#ifdef SIMPLE_EXAMPE
+int main()
+{
+    cout << "Hello World!" << endl;
+
+
+    HaptikfabrikenInterface hi(false,
+                               Kinematics::configuration::polhem_v3(),
+                               HaptikfabrikenInterface::USB);
+    hi.open();
+
+
+    std::this_thread::sleep_for(hundred_milliseconds);
+    std::this_thread::sleep_for(hundred_milliseconds);
+
+    //hi.calibrate(); // for woodenhaptics
+
+    double t=0;
+
+    bool active_phase=true;
+
+    fsVec3d thetas_start = hi.getBodyAngles()*(180/3.141592);
+
+    bool go=0;
+    while(active_phase){
+        if(_kbhit()) {
+            char cc;
+            std::cin >> cc;
+            active_phase=false;
+        }
+
+        //continue;
+
+        fsVec3d v = hi.getPos();
+        int e[6];
+        hi.getEnc(e);
+        fsVec3d thetas = hi.getBodyAngles()*(180/3.141592);
+
+        double dtheta = thetas.m_x - thetas_start.m_x;
+
+
+        go=!go;
+
+        // Alternatively, set actual current in Amperes to respective motor (a,b,c)
+        fsVec3d c(0.000+go*0.008,0,0);
+        //fsVec3d c;
+        hi.setCurrent(c);
+
+        int ma[3];
+        hi.getLatestCommandedMilliamps(ma);
+
+
+        std::cout << "dtheta; " << dtheta << " P: " << toString(v)
+                  << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
+                              << e[3] << " " << e[4] << " " << e[5]
+                  << " t: "<< toString(thetas)
+                  << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<
+                     " " <<  hi.getNumReceivedMessages() << " " << hi.getNumSentMessages() <<
+                  " " <<  hi.getNumReceivedMessages()/t << " " << hi.getNumSentMessages()/t
+                  <<"\n";
+
+
+        std::this_thread::sleep_for(100*one_millisecond);
+    }
+
+    cout << "Goodbye World!" << endl;
+    hi.close();
+}
+#endif
+
+
+
+#ifdef LISTENER_EXAMPLE
 /*
  *
  *  Haptic Listner example
@@ -64,15 +143,15 @@ class MyHapticListener : public HapticListener {
            fsVec3d f = -100 * hv.position;
            hv.nextForce = f;
        }
+       MyHapticListener(){
+           t1 = high_resolution_clock::now();
+           t2=t1;
+       }
+
+       high_resolution_clock::time_point t1,t2;
 };
 
 
-//#define OVERDRIVE_EXPERIMENT
-#define LISTENER_EXAMPLE
-
-
-
-#ifdef LISTENER_EXAMPLE
 
 int main()
 {
@@ -96,7 +175,11 @@ int main()
     while(running){
         if(_kbhit()) running=false;
 
-        std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << "\n";
+        int enc[6];
+        hi.getEnc(enc);
+
+        std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << " " <<
+                  enc[0] << " " << enc[1] << " " << enc[2] << " " << "\n";
 
         // Just wait for keyboard hit
         this_thread::sleep_for(std::chrono::microseconds(100000)); // 100ms

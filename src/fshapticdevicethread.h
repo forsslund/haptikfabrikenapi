@@ -287,7 +287,7 @@ public:
 
     boost::asio::io_service* io_service;
 
-    int max_milliamps = 3000;
+    int max_milliamps = 6000;
 
 
 

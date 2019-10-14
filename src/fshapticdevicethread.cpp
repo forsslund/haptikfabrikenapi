@@ -257,6 +257,11 @@ void FsHapticDeviceThread::event_thread()
     total_t1=high_resolution_clock::now();
 
     while(running){
+        if(listeners.size() == 0){
+            this_thread::sleep_for(1000*microsecond);
+            continue; // Wait for added listener
+        }
+
         HapticValues hv;
         hv.position = getPos(true);
         bool readyContinue=false;
@@ -290,7 +295,7 @@ void FsHapticDeviceThread::event_thread()
                     duration<double> time_span = duration_cast<duration<double>>(listeners_t2 - listeners_t1);
                     listeners_dt += time_span.count();
 
-                    double gain = 0.5;
+                    double gain = 1.0;
                     setForce(gain*hv.nextForce);
                     readyContinue=true;
                 }

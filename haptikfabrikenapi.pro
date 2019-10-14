@@ -25,6 +25,9 @@ CONFIG += dynamiclib
 # This disables safemode check, which may be needed using WoodenHaptics
 #DEFINES += DISABLE_SAFEMODE_CHECK
 
+# Using a serial-based controller?
+#DEFINES += PURE_SERIAL
+
 
 # Rest of configuration comes here
 CONFIG += console c++11
