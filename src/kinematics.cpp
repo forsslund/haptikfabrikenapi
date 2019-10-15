@@ -330,8 +330,14 @@ fsVec3d Kinematics::computeBodyAngles(const int *encoderValues)
     int e[3] = {encoderValues[0],encoderValues[1],encoderValues[2]};
 
     pose p  = calculate_pose(m_config, e);
+    double third_axis = p.tC;
 
-    return fsVec3d(p.tA, p.tB, p.tC);
+#ifdef SUPPORT_POLHEMV2
+    if(m_config.variant==3)
+        third_axis=polhemComputeLambda(p.tB,p.tC);
+#endif
+
+    return fsVec3d(p.tA, p.tB, third_axis);
 }
 
 // ------------------------------------------------------------------------

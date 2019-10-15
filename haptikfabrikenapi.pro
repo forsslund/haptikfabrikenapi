@@ -52,7 +52,7 @@ CONFIG += polhemv2
 
 polhemv2 {
     HEADERS += ../fs_polhem/haptikfabrikenapi-polhem/polhem.h
-    #HEADERS += polhem.h
+    linux: HEADERS += src/polhem.h
     DEFINES += SUPPORT_POLHEMV2
 }
 
