@@ -26,7 +26,7 @@ CONFIG += dynamiclib
 #DEFINES += DISABLE_SAFEMODE_CHECK
 
 # Using a serial-based controller?
-#DEFINES += PURE_SERIAL
+DEFINES += PURE_SERIAL
 
 
 # Rest of configuration comes here

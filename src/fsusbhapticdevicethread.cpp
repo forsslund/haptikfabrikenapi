@@ -554,8 +554,9 @@ void FsUSBHapticDeviceThread::calibrate()
                    int(kinematics.m_config.calibrate_enc_e),
                    int(kinematics.m_config.calibrate_enc_f)};
 
-    if(PCB == POLHEM_USB)
-        tell_hid_to_calibrate = true;
+    if(PCB == POLHEM_USB){
+//        tell_hid_to_calibrate = true; // Disable software initated calibration.
+    }
     else {
         // Since we are read-only, we only set it using offset.
         mtx_pos.lock();
