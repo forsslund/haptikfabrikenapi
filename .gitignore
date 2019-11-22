@@ -1,2 +1,6 @@
-
+external/sensoray/sdk_826_linux_3.3.11
+*.o
+libhaptikfabrikenapi.*
+.qmake.stash
+Makefile
 *.user

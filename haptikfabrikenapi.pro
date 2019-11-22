@@ -11,10 +11,10 @@
 
 # ...and comment these lines out:
 TEMPLATE = lib
-CONFIG += dynamiclib
+#CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-#CONFIG += staticlib
+CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -35,6 +35,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 TARGET = haptikfabrikenapi
+CONFIG(debug, debug|release):   TARGET = haptikfabrikenapi_d
+
 linux: target.path = /usr/local/lib
 win32: target.path = c:/chai3d/external/haptikfabrikenapi
 header_files.files = src/haptikfabrikenapi.h
@@ -58,6 +60,8 @@ polhemv2 {
 
 # In windows, specify your boost folder
 BOOST = F:\boost_1_62_0
+
+win32: DEFINES += WIN32
 
 
 
