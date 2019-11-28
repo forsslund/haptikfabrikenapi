@@ -330,8 +330,7 @@ void FsUSBHapticDeviceThread::thread()
         }
         if (num_bytes == 0){
             pc_to_hid = {};
-            unsigned int len = pc_to_hid.toChars(outstr);
-
+            unsigned int len = unsigned(pc_to_hid.toChars(outstr));
 #ifdef WIN32
             arduino->writeSerialPort(outstr, len);
 #else
@@ -513,7 +512,7 @@ void FsUSBHapticDeviceThread::thread()
 #ifdef PURE_SERIAL
         int len = pc_to_hid.toChars(outstr);
 #ifdef WIN32
-        arduino->writeSerialPort(outstr, len);
+        arduino->writeSerialPort(outstr, unsigned(len));
 #else
         write(serial_port,outstr,len);
 #endif

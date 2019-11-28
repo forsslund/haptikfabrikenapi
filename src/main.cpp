@@ -77,7 +77,6 @@ int main()
 
     //hi.calibrate(); // for woodenhaptics
 
-    double t=0;
 
     bool active_phase=true;
 
@@ -104,7 +103,7 @@ int main()
         go=!go;
 
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
-        fsVec3d c(0.000+go*0.008,0,0);
+        fsVec3d c(0.000,0,0);
         //fsVec3d c;
         hi.setCurrent(c);
 
@@ -116,10 +115,8 @@ int main()
                   << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
                               << e[3] << " " << e[4] << " " << e[5]
                   << " t: "<< toString(thetas)
-                  << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<
-                     " " <<  hi.getNumReceivedMessages() << " " << hi.getNumSentMessages() <<
-                  " " <<  hi.getNumReceivedMessages()/t << " " << hi.getNumSentMessages()/t
-                  <<"\n";
+                  << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
+                  <<"!!!\n";
 
 
         std::this_thread::sleep_for(100*one_millisecond);

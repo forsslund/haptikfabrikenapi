@@ -38,10 +38,10 @@ TARGET = haptikfabrikenapi
 CONFIG(debug, debug|release):   TARGET = haptikfabrikenapi_d
 
 linux: target.path = /usr/local/lib
-win32: target.path = c:/chai3d/external/haptikfabrikenapi
+win32: target.path = c:/chai3d-github/external/haptikfabrikenapi
 header_files.files = src/haptikfabrikenapi.h
 linux: header_files.path = /usr/local/include
-win32: header_files.path = c:/chai3d/external/haptikfabrikenapi
+win32: header_files.path = c:/chai3d-github/external/haptikfabrikenapi
 INSTALLS += target
 INSTALLS += header_files
 
