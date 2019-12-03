@@ -62,10 +62,11 @@ void FsUSBHapticDeviceThread::thread()
     num_sent_messages = 0;
     num_received_messages = 0;
 
+
+#ifndef PURE_SERIAL
     // Set protocol 1=Old usb, 2=April 2018, and for POLHEM
     constexpr int protocol_version = PCB==WOODENHAPTICS ? 1 : 2;
 
-#ifndef PURE_SERIAL
     // Open the device using the VID, PID,
     // and optionally the Serial number.
     hid_device *handle = hid_open(0x1234, 0x6, nullptr);
@@ -73,6 +74,9 @@ void FsUSBHapticDeviceThread::thread()
         std::cout << "unable to open device. Is it plugged in and you run with right permission (or as root?)\n";
         return;
     }
+    const int in_bytes = (protocol_version==2)? 15: 9;
+    const int out_bytes = (protocol_version==2)? 15: 9;
+    unsigned char in_buf[in_bytes];
 #endif
 
     std::cout << "\n************************************\n";
@@ -85,9 +89,6 @@ void FsUSBHapticDeviceThread::thread()
 
     tell_hid_to_calibrate = false;
     bool forced_inital_calibration = PCB==WOODENHAPTICS ? true : false;
-    const int out_bytes = (protocol_version==2)? 15: 9;
-    const int in_bytes = (protocol_version==2)? 15: 9;
-    unsigned char in_buf[in_bytes];
 
     std::chrono::duration<int, std::micro> microsecond{1};
 
@@ -106,12 +107,10 @@ void FsUSBHapticDeviceThread::thread()
     // Boost style serial comm.
     using namespace boost::asio;
     boost::asio::io_service io;
-    port = new serial_port(io, "COM9");
+    port = new serial_port(io, "/dev/ttyACM0");
+    //port = new serial_port(io, "COM9");
     m_wakeup_thread = new boost::thread(boost::bind(&FsUSBHapticDeviceThread::wakeup_thread, this));
 
-
-
-    char read_buf [64];
     char outstr[64];
 #ifdef UNIX_NATIVE_SERIAL
     std::cout << "Opening /dev/ttyACM0\n";
@@ -204,16 +203,9 @@ void FsUSBHapticDeviceThread::thread()
 #ifdef PURE_SERIAL
 
 
-#ifdef WIN32
         boost::asio::streambuf sb;
 
         int num_bytes = read_until(*port,sb,'\n');
-
-#else
-        memset(&read_buf, '\0', sizeof(read_buf));
-        int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
-        // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-#endif
 
         if (num_bytes < 0) {
             std::cout << "Error reading: " <<  errno;
@@ -221,12 +213,7 @@ void FsUSBHapticDeviceThread::thread()
         }
         if (num_bytes == 0){ // not happening with boost sync read
             pc_to_hid = {};
-            unsigned int len = unsigned(pc_to_hid.toChars(outstr));
-#ifdef WIN32
-
-#else
-            write(serial_port,outstr,len);
-#endif
+            pc_to_hid.toChars(outstr);
             this_thread::sleep_for(100*microsecond);
             std::cout << "initial\n";
             continue;
@@ -234,6 +221,7 @@ void FsUSBHapticDeviceThread::thread()
         //hid_to_pc.fromChars(read_buf);
         std::string sbs( (std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>() );
         hid_to_pc.fromChars(sbs.c_str());
+        got_message=true; // Inform the "wake up" thread
 
 #else
         // **************** RECEIVE ***************
@@ -402,12 +390,8 @@ void FsUSBHapticDeviceThread::thread()
         }
 
 #ifdef PURE_SERIAL
-        int len = pc_to_hid.toChars(outstr);
-#ifdef WIN32
+        pc_to_hid.toChars(outstr);
         write(*port,buffer(outstr));
-#else
-        write(serial_port,outstr,len);
-#endif
 #else
         // **************** SEND ***************
         unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
@@ -462,14 +446,10 @@ void FsUSBHapticDeviceThread::thread()
         hid_exit();
     }
 #else
-#ifdef WIN32
     m_wakeup_thread->join();
     port->close();
     delete m_wakeup_thread;
     delete port;
-#else
-    ::close(serial_port);
-#endif
 #endif
 }
 

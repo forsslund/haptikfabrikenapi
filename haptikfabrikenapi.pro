@@ -11,10 +11,10 @@
 
 # ...and comment these lines out:
 TEMPLATE = lib
-#CONFIG += dynamiclib
+CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-CONFIG += staticlib
+#CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file

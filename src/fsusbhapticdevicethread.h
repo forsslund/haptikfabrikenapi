@@ -106,7 +106,7 @@ private:
     // For pure serial (boost style)
     boost::thread* m_wakeup_thread;
     boost::asio::serial_port* port;
-    bool got_message;
+    bool got_message{false};
 
 #ifdef SERIAL_READ
     void usb_serial_thread();
