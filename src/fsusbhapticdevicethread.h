@@ -9,47 +9,12 @@
 //#define SERIAL_READ
 
 
-
-
-#ifdef WIN32
-/*
-* Author: Manash Kumar Mandal
-* Modified Library introduced in Arduino Playground which does not work
-* This works perfectly
-* LICENSE: MIT
-*/
-
-
-#ifndef SERIALPORT_H
-#define SERIALPORT_H
-
-#define ARDUINO_WAIT_TIME 2000
-#define MAX_DATA_LENGTH 255
-
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-class SerialPort
-{
-private:
-    HANDLE handler;
-    bool connected;
-    COMSTAT status;
-    DWORD errors;
-public:
-    SerialPort(const char *portName);
-    ~SerialPort();
-
-    int readSerialPort(char *buffer, unsigned int buf_size);
-    bool writeSerialPort(char *buffer, unsigned int buf_size);
-    bool isConnected();
-    void closeSerial();
-};
-
-#endif // SERIALPORT_H
-#endif // WIN32
-
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp>
+#include <chrono>
+#include <thread>
 
 
 
@@ -126,6 +91,7 @@ public:
     }
 
     void calibrate();
+    void wakeup_thread();
 
 
 private:
@@ -136,6 +102,11 @@ private:
 
     Webserv* w;
 
+
+    // For pure serial (boost style)
+    boost::thread* m_wakeup_thread;
+    boost::asio::serial_port* port;
+    bool got_message;
 
 #ifdef SERIAL_READ
     void usb_serial_thread();

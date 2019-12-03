@@ -59,7 +59,9 @@ polhemv2 {
 }
 
 # In windows, specify your boost folder
-BOOST = F:\boost_1_62_0
+BOOST = F:\boost_1_62_0 # 1.71 will currently break http_server,
+                        # updates to be incorporated from
+                        # https://gitlab.com/eidheim/Simple-Web-Server
 
 win32: DEFINES += WIN32
 

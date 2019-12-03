@@ -14,6 +14,19 @@
 
 #include "../external/sensoray/826api.h"
 
+//#define OVERDRIVE_EXPERIMENT
+//#define LISTENER_EXAMPLE
+#define SIMPLE_EXAMPE
+//#define BOOST_SERIAL_EXAMPLE
+
+#ifdef BOOST_SERIAL_EXAMPLE
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp>
+#include <chrono>
+#include <thread>
+#endif
 
 
 #ifdef UNIX
@@ -54,9 +67,117 @@ using namespace std::chrono;
 duration<int, std::micro> hundred_milliseconds{100000};
 duration<int, std::micro> one_millisecond{1000};
 
-//#define OVERDRIVE_EXPERIMENT
-//#define LISTENER_EXAMPLE
-#define SIMPLE_EXAMPE
+
+
+#ifdef BOOST_SERIAL_EXAMPLE
+using namespace boost::asio;
+
+#include <iostream>
+
+
+struct hid_to_pc_message { // 7*2 = 14 bytes
+  short encoder_a;
+  short encoder_b;
+  short encoder_c;
+  short encoder_d;
+  short encoder_e;
+  short encoder_f;
+  short info;
+  int toChars(char *c) {
+    int n = sprintf(c, "%hd %hd %hd %hd %hd %hd %hd", encoder_a, encoder_b, encoder_c,
+                   encoder_d, encoder_e, encoder_f, info);
+    std::cout << n << " chars written\n";
+    while(n<62) c[n++] = '.';
+    c[62]='\n';
+    c[63]='\0';
+    return 63;
+  }
+  void fromChars(const char *c) {
+    sscanf(c, "%hd %hd %hd %hd %hd %hd %hd", &encoder_a, &encoder_b, &encoder_c,
+           &encoder_d, &encoder_e, &encoder_f, &info);
+  }
+};
+
+
+class Bserial {
+public:
+    void wakeup_thread(){
+        while(running){
+
+            // Sleep 100ms
+            std::chrono::duration<int, std::micro> microsecond{1};
+            this_thread::sleep_for(100000*microsecond);
+
+            if(!got_message){
+                std::cout << "Init writing\n";
+                write(*port,buffer("0 0 0 0 0 0 0\n"));
+            }
+            got_message=false;
+        }
+    }
+    Bserial():got_message(false),running(true){
+
+        boost::asio::io_service io;
+        using namespace std;
+
+        cout << "          1         2         3         4         5         6\n";
+        cout << "0123456789012345678901234567890123456789012345678901234567890123\n";
+
+        port = new serial_port(io, "COM9");
+        char d[64];
+        for(int i=0;i<64;++i) d[i]=0;
+
+
+        m_wakeup_thread = new boost::thread(boost::bind(&Bserial::wakeup_thread, this));
+
+        boost::asio::streambuf sb;
+
+        for(int p=0;p<1000;p++){
+            //read(port,buffer(d,63));
+            cout << "Reading...\n";
+            size_t n = read_until(*port,sb,'\n');
+            got_message=true;
+            std::string s( (std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>() );
+            std::cout << "n: " << n << " " << s;
+            for(int i=0;i<64;i++){
+                d[i] = d[i]==' '?'_':d[i];
+                d[i] = d[i]=='\n'?'*':d[i];
+                d[i] = d[i]=='\0'?'&':d[i];
+                cout << d[i];
+            }
+            cout << '\n';
+
+            std::cout << "Force writing\n";
+            write(*port,buffer("0 0 0 0 0 0 0\n"));
+            std::chrono::duration<int, std::micro> microsecond{1};
+            this_thread::sleep_for(50000*microsecond);
+        }
+
+
+
+
+        //io.run();
+
+
+
+    }
+    void msg(){
+
+    }
+
+    boost::thread* m_wakeup_thread;
+    serial_port* port;
+    bool got_message;
+    bool running;
+};
+
+int main()
+{
+    Bserial b;
+    return 0;
+}
+
+#endif
 
 
 
