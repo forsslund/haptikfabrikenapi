@@ -390,8 +390,8 @@ void FsUSBHapticDeviceThread::thread()
         }
 
 #ifdef PURE_SERIAL
-        pc_to_hid.toChars(outstr);
-        write(*port,buffer(outstr));
+        int len = pc_to_hid.toChars(outstr);
+        write(*port,buffer(outstr,len));
 #else
         // **************** SEND ***************
         unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
