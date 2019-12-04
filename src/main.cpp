@@ -188,7 +188,7 @@ int main()
 
 
     HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::polhem_v3(),
+                               Kinematics::configuration::woodenhaptics_v2015(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 

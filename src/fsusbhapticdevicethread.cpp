@@ -341,7 +341,8 @@ void FsUSBHapticDeviceThread::thread()
         //sem_setforce.wait();
         //while(sem_setforce.try_wait());
 
-        this_thread::sleep_for(60*microsecond);
+
+        //this_thread::sleep_for(60*microsecond);
 
 
 

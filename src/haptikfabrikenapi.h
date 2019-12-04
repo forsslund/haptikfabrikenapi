@@ -292,6 +292,20 @@ public:
         }
 
         // Some configurations (won't require to use the filesystem)
+        static configuration woodenhaptics_v2019() {
+            double data[] = { 0, 0.010, 0.010, 0.010,
+                              0.080, 0.205, 0.245,
+                              0.160, 0.120, 0.120,
+                              0.220, 0.000, 0.080, 0.100,
+                              0.321, 0.0603, 0.0603, 3.0, 2000, 2000, 2000,0,0,0,
+                              5.0, 1000.0, 8.0,
+                              0.170, 0.110, 0.051, 0.091, 0,
+                              0,0,6000,0,0,0,
+                              0,0,0,0,0,0};
+            return Kinematics::configuration(data,"woodenhaptics_v2019 hardcoded");
+        }
+
+        // Some configurations (won't require to use the filesystem)
         static configuration woodenhaptics_v2015() {
             double data[] = { 0, 0.010, 0.010, 0.010,
                               0.080, 0.205, 0.245,
