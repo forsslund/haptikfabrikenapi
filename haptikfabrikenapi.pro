@@ -6,15 +6,15 @@
 # with boost and sensoray.
 #
 # For testing/experimentation uncomment (remove #) these lines (and run qmake)...
-#TEMPLATE = app
-#SOURCES += src/main.cpp
+TEMPLATE = app
+SOURCES += src/main.cpp
 
 # ...and comment these lines out:
-TEMPLATE = lib
+#TEMPLATE = lib
 #CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-CONFIG += staticlib
+#CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -48,7 +48,7 @@ INSTALLS += header_files
 
 # Choose if you are using USB HID edition (currently only linux) or UDP (default) by commenting this line
 CONFIG += use_usb_hid
-CONFIG += use_webserv
+CONFIG -= use_webserv
 CONFIG += use_sensoray
 CONFIG += polhemv2
 
@@ -59,7 +59,8 @@ polhemv2 {
 }
 
 # In windows, specify your boost folder
-BOOST = F:\boost_1_62_0 # 1.71 will currently break http_server,
+#BOOST = F:\boost_1_62_0
+BOOST = F:\boost_1_71_0 # 1.71 will currently break http_server,
                         # updates to be incorporated from
                         # https://gitlab.com/eidheim/Simple-Web-Server
 
@@ -91,8 +92,9 @@ use_usb_hid {
 }
 
 use_webserv {
-    SOURCES += src/webserv.cpp
-    HEADERS += src/webserv.h src/client_http.h src/server_http.h
+#    SOURCES += src/webserv.cpp
+#    HEADERS += src/webserv.h src/client_http.h src/server_http.h
+#    DEFINES += USE_WEBSERV
 }
 
 use_sensoray {
@@ -124,6 +126,11 @@ win32{
     LIBS += $${A}\coroutine$${B}
     LIBS += $${A}\thread$${B}
     LIBS += $${A}\chrono$${B}
+
+    # If you actually run boost this way:
+    # bootstrap
+    # b2 address-model=64 install
+    LIBS += -L$${BOOST}\stage\lib
 
     LIBS += -lsetupapi
 }

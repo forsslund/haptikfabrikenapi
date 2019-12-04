@@ -43,15 +43,21 @@ namespace haptikfabriken {
 
 FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(bool wait_for_next_message,
                                                  Kinematics::configuration c):
-    FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),w(0){}
+    FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c)
+  #ifdef USE_WBESRV
+  ,w(0)
+  #endif
+{}
 
 void FsUSBHapticDeviceThread::thread()
 {
     // Start web server
+#ifdef USE_WEBSERV
     if(w==0){
         w = new Webserv();
         w->initialize();
     }
+#endif
 
 #ifdef SERIAL_READ
     // Start receving usb serial thread
@@ -275,10 +281,15 @@ void FsUSBHapticDeviceThread::thread()
         }
 
         // If encoder set by webserv, use that instead
+#ifdef USE_WEBSERV
         if(w->activeEnc5())
             hid_to_pc.encoder_d = short(w->getEnc5());
         else if(use_serial_for_enc5)
             hid_to_pc.encoder_d = short(enc5_serial);
+#else
+        if(use_serial_for_enc5)
+                    hid_to_pc.encoder_d = short(enc5_serial);
+#endif
 
         // Decode button
         bool btn=false;
@@ -414,6 +425,7 @@ void FsUSBHapticDeviceThread::thread()
 
 
         // Set webserver info
+#ifdef USE_WEBSERV
         stringstream ss;
         ss << "\"DeviceName\": \"" << kinematics.m_config.name << "\",\n";
         ss << "\"Encoders\": [" << ch_a << ", " << ch_b << ", " << ch_c << ", " << rot[0]
@@ -432,6 +444,7 @@ void FsUSBHapticDeviceThread::thread()
         ss << "\"NumSentMessages\": " << num_sent_messages << ",\n";
         ss << "\"NumReceivedMessages\": " << num_received_messages << "\n";
         if(w) w->setMessage(ss.str());
+#endif
 
     }
 

@@ -131,9 +131,12 @@ void FsDAQHapticDeviceThread::thread()
             rot[1] = signedenc(4);
             // Normally we get from daq
             // 2019-08-21 Get from Web..! (bluetooth proxy)
+#ifdef USE_WEBSERV
             if(w->activeEnc5())
                 rot[2] = w->getEnc5();
-            else if(use_serial_for_enc5)
+            else
+#endif
+            if(use_serial_for_enc5)
                 rot[2] = enc5_serial;
             else
                 rot[2] = signedenc(3);
@@ -254,6 +257,7 @@ void FsDAQHapticDeviceThread::thread()
 
 
         // Set webserver info
+        #ifdef USE_WEBSERV
         stringstream ss;
         ss << "\"DeviceName\": \"" << kinematics.m_config.name << "\",\n";
         ss << "\"Encoders\": [" << enc[0] << ", " << enc[1] << ", " << enc[2] << ", " << rot[0]
@@ -273,6 +277,7 @@ void FsDAQHapticDeviceThread::thread()
         ss << "\"NumSentMessages\": " << num_sent_messages << ",\n";
         ss << "\"NumReceivedMessages\": " << num_received_messages << "\n";
         if(w) w->setMessage(ss.str());
+#endif
 
 
 
@@ -318,9 +323,11 @@ void FsDAQHapticDeviceThread::close()
     }
     cout << "2...\n";
 
+#ifdef USE_WEBSERV
     if(w)
         delete w;
     w=0;
+#endif
 
     cout << "Done.\n";
 }
@@ -409,10 +416,12 @@ void FsDAQHapticDeviceThread::calibrate(bool force)
 int FsDAQHapticDeviceThread::open()
 {
     // Start web server
+#ifdef USE_WEBSERV
     if(w==0){
         w = new Webserv();
         w->initialize();
     }
+#endif
 
     // Open connection
     int status = S826_SystemOpen();

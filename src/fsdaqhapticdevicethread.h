@@ -2,7 +2,9 @@
 #define FSDAQHAPTICDEVICETHREAD_H
 
 #include "fshapticdevicethread.h"
+#ifdef USE_WEBSERV
 #include "webserv.h"
+#endif
 
 namespace haptikfabriken {
 
@@ -14,8 +16,12 @@ class FsDAQHapticDeviceThread : public FsHapticDeviceThread
 public:
     FsDAQHapticDeviceThread(bool wait_for_next_message=false,
         Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015()):
-        FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),w(0),
-        m_ixthread{0,0,0,0,0,0},enable_calibration_button_ix0(false){}
+        FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),
+        m_ixthread{0,0,0,0,0,0},enable_calibration_button_ix0(false)
+    #ifdef USE_WEBSERV
+      ,w(0)
+  #endif
+    {}
 
     void thread();
     void close();
@@ -30,7 +36,9 @@ public:
     }
 
 private:
+#ifdef USE_WEBSERV
     Webserv* w;
+#endif
     boost::thread* m_ixthread[6];
     bool enable_calibration_button_ix0;
 

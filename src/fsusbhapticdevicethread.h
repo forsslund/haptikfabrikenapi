@@ -2,7 +2,9 @@
 #define FSUSBHAPTICDEVICETHREAD_H
 
 #include "fshapticdevicethread.h"
+#ifdef USE_WEBSERV
 #include "webserv.h"
+#endif
 #include <stdio.h> // for sscanf
 
 // Uncomment to receive final axis data over serial (another controller)
@@ -100,7 +102,9 @@ private:
     bool tell_hid_to_calibrate{false};
     bool firstMessage{false};
 
+#ifdef USE_WEBSERV
     Webserv* w;
+#endif
 
 
     // For pure serial (boost style)

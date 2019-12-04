@@ -225,8 +225,8 @@ int main()
 
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
         fsVec3d c(0.000,0,0);
-        //fsVec3d c;
         hi.setCurrent(c);
+        //hi.setForce(fsVec3d(1,0,0));
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
