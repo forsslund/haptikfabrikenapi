@@ -211,12 +211,8 @@ void FsUSBHapticDeviceThread::thread()
 
         boost::asio::streambuf sb;
 
-        int num_bytes = read_until(*port,sb,'\n');
+        size_t num_bytes = read_until(*port,sb,'\n');
 
-        if (num_bytes < 0) {
-            std::cout << "Error reading: " <<  errno;
-            continue;
-        }
         if (num_bytes == 0){ // not happening with boost sync read
             pc_to_hid = {};
             pc_to_hid.toChars(outstr);

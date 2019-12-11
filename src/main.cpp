@@ -19,6 +19,7 @@
 #define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
 
+
 #ifdef BOOST_SERIAL_EXAMPLE
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -186,6 +187,13 @@ int main()
 {
     cout << "Hello World!" << endl;
 
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport << "\n";
+    unsigned int a = HaptikfabrikenInterface::findUSBSerialDevices();
+    cout << "Found " << a << " devices\n";
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport << "\n";
+
+    /*
+
 
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::woodenhaptics_v2015(),
@@ -245,6 +253,7 @@ int main()
 
     cout << "Goodbye World!" << endl;
     hi.close();
+    */
 }
 #endif
 
