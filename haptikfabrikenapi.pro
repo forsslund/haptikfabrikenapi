@@ -59,8 +59,8 @@ polhemv2 {
 }
 
 # In windows, specify your boost folder
-#BOOST = F:\boost_1_62_0
-BOOST = F:\boost_1_71_0 # 1.71 will currently break http_server,
+BOOST = F:\boost_1_62_0
+#BOOST = F:\boost_1_71_0 # 1.71 will currently break http_server,
                         # updates to be incorporated from
                         # https://gitlab.com/eidheim/Simple-Web-Server
 
@@ -92,9 +92,9 @@ use_usb_hid {
 }
 
 use_webserv {
-#    SOURCES += src/webserv.cpp
-#    HEADERS += src/webserv.h src/client_http.h src/server_http.h
-#    DEFINES += USE_WEBSERV
+    SOURCES += src/webserv.cpp
+    HEADERS += src/webserv.h src/client_http.h src/server_http.h
+    DEFINES += USE_WEBSERV
 }
 
 use_sensoray {

@@ -18,7 +18,21 @@
 //#define LISTENER_EXAMPLE
 #define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
+//#define WEBSERV_TEST
 
+
+
+#ifdef WEBSERV_TEST
+#include "webserv.h"
+int main(){
+    for(int i=0;i<2;++i){
+        Webserv* w = new Webserv();
+        w->initialize();
+        delete w;
+        w=0;
+    }
+}
+#endif
 
 #ifdef BOOST_SERIAL_EXAMPLE
 #include <boost/asio.hpp>

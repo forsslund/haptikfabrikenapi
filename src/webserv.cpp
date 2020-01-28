@@ -28,10 +28,11 @@ Webserv::Webserv(){
 Webserv::~Webserv()
 {
     cout<<"Webserv Stopping Server"<<endl;
+    server->stop();
     if(webservThread.joinable()){
-        server->stop();
         webservThread.join();
     }
+    delete server; // Works but theoretically undefined behaviour. New ASIO lib may fix.
     cout<<"Webserv Node Destructed"<<endl;
 }
 
@@ -181,8 +182,8 @@ void Webserv::initialize(int port)
     cout<<"Webserv Initializing"<<endl;
 
 
-    //HTTP-server at port 8088 using 4 threads
-    server = new HttpServer(port, 1);
+    //HTTP-server at port 8088 using 2 threads
+    server = new HttpServer(port, 2);
 
     using namespace std::placeholders;
 

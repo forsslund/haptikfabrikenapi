@@ -90,6 +90,17 @@ public:
 
     ~FsUSBHapticDeviceThread(){
         std::cout << "Fsusb desctructor\n";
+        if(running){
+            std::cout << "Haptikfabriken threads still running. Please call close() before destructing object.\nTrying to call close() now...\n";
+            close();
+            std::cout << "Close returned successfully.\n";
+        }
+#ifdef USE_WEBSERV
+        if(w){
+            delete w;
+            w=nullptr;
+        }
+#endif
     }
 
     void calibrate();
