@@ -44,7 +44,7 @@ namespace haptikfabriken {
 FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(bool wait_for_next_message,
                                                  Kinematics::configuration c):
     FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c)
-  #ifdef USE_WBESRV
+  #ifdef USE_WEBSERV
   ,w(0)
   #endif
 {}
@@ -86,12 +86,15 @@ void FsUSBHapticDeviceThread::thread()
 #endif
 
     std::cout << "\n************************************\n";
-    std::cout <<   "*  Welcome to HaptikfabrikenFsUSB! *\n";
+    std::cout <<   "*  Welcome to HaptikfabrikenFsUSB  *\n";
     std::cout <<   "*  Build: " << __DATE__ << " " __TIME__ << "     *\n";
     std::cout <<   "************************************\n";
 #ifdef PURE_SERIAL
     std::cout <<   "*  PURE SERIAL                     *\n";
 #endif
+
+    std::cout << kinematics.m_config.name << std::endl;
+    std::cout << toJSON(kinematics.m_config);
 
     tell_hid_to_calibrate = false;
     bool forced_inital_calibration = PCB==WOODENHAPTICS ? true : false;

@@ -197,6 +197,7 @@ haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_n
         break;
     case USB:
 #ifdef USE_USB_HID
+        HaptikfabrikenInterface::findUSBSerialDevices();
         fsthread = new FsUSBHapticDeviceThread(wait_for_next_message,c);
 #endif
         break;
