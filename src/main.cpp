@@ -206,11 +206,10 @@ int main()
     cout << "Found " << a << " devices\n";
     cout << "Serialport name: " << HaptikfabrikenInterface::serialport << "\n";
 
-    /*
 
 
     HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::woodenhaptics_v2015(),
+                               Kinematics::configuration::polhem_v3(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 
@@ -267,7 +266,6 @@ int main()
 
     cout << "Goodbye World!" << endl;
     hi.close();
-    */
 }
 #endif
 
