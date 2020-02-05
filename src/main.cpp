@@ -5,7 +5,6 @@
  *   and link with the library.
  */
 
-
 #include <iostream>
 #include "haptikfabrikenapi.h" // Kinematics stuff
 
@@ -18,7 +17,21 @@
 //#define LISTENER_EXAMPLE
 #define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
+//#define WEBSERV_TEST
 
+#ifdef WEBSERV_TEST
+#include "webserv.h"
+int main()
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        Webserv *w = new Webserv();
+        w->initialize();
+        delete w;
+        w = 0;
+    }
+}
+#endif
 
 #ifdef BOOST_SERIAL_EXAMPLE
 #include <boost/asio.hpp>
@@ -29,7 +42,6 @@
 #include <thread>
 #endif
 
-
 #ifdef UNIX
 // ******************** FOR LINUX KEYBOARD LOOP BREAK ***********
 #include <stdio.h>
@@ -38,11 +50,13 @@
 #include <termios.h>
 #include <stropts.h>
 
-int _kbhit() {
+int _kbhit()
+{
     static const int STDIN = 0;
     static bool initialized = false;
 
-    if (! initialized) {
+    if (!initialized)
+    {
         // Use termios to turn off line buffering
         termios term;
         tcgetattr(STDIN, &term);
@@ -68,55 +82,60 @@ using namespace std::chrono;
 duration<int, std::micro> hundred_milliseconds{100000};
 duration<int, std::micro> one_millisecond{1000};
 
-
-
 #ifdef BOOST_SERIAL_EXAMPLE
 using namespace boost::asio;
 
 #include <iostream>
 
-
-struct hid_to_pc_message { // 7*2 = 14 bytes
-  short encoder_a;
-  short encoder_b;
-  short encoder_c;
-  short encoder_d;
-  short encoder_e;
-  short encoder_f;
-  short info;
-  int toChars(char *c) {
-    int n = sprintf(c, "%hd %hd %hd %hd %hd %hd %hd", encoder_a, encoder_b, encoder_c,
-                   encoder_d, encoder_e, encoder_f, info);
-    std::cout << n << " chars written\n";
-    while(n<62) c[n++] = '.';
-    c[62]='\n';
-    c[63]='\0';
-    return 63;
-  }
-  void fromChars(const char *c) {
-    sscanf(c, "%hd %hd %hd %hd %hd %hd %hd", &encoder_a, &encoder_b, &encoder_c,
-           &encoder_d, &encoder_e, &encoder_f, &info);
-  }
+struct hid_to_pc_message
+{ // 7*2 = 14 bytes
+    short encoder_a;
+    short encoder_b;
+    short encoder_c;
+    short encoder_d;
+    short encoder_e;
+    short encoder_f;
+    short info;
+    int toChars(char *c)
+    {
+        int n = sprintf(c, "%hd %hd %hd %hd %hd %hd %hd", encoder_a, encoder_b, encoder_c,
+                        encoder_d, encoder_e, encoder_f, info);
+        std::cout << n << " chars written\n";
+        while (n < 62)
+            c[n++] = '.';
+        c[62] = '\n';
+        c[63] = '\0';
+        return 63;
+    }
+    void fromChars(const char *c)
+    {
+        sscanf(c, "%hd %hd %hd %hd %hd %hd %hd", &encoder_a, &encoder_b, &encoder_c,
+               &encoder_d, &encoder_e, &encoder_f, &info);
+    }
 };
 
-
-class Bserial {
+class Bserial
+{
 public:
-    void wakeup_thread(){
-        while(running){
+    void wakeup_thread()
+    {
+        while (running)
+        {
 
             // Sleep 100ms
             std::chrono::duration<int, std::micro> microsecond{1};
-            this_thread::sleep_for(100000*microsecond);
+            this_thread::sleep_for(100000 * microsecond);
 
-            if(!got_message){
+            if (!got_message)
+            {
                 std::cout << "Init writing\n";
-                write(*port,buffer("0 0 0 0 0 0 0\n"));
+                write(*port, buffer("0 0 0 0 0 0 0\n"));
             }
-            got_message=false;
+            got_message = false;
         }
     }
-    Bserial():got_message(false),running(true){
+    Bserial() : got_message(false), running(true)
+    {
 
         boost::asio::io_service io;
         using namespace std;
@@ -126,48 +145,44 @@ public:
 
         port = new serial_port(io, "COM9");
         char d[64];
-        for(int i=0;i<64;++i) d[i]=0;
-
+        for (int i = 0; i < 64; ++i)
+            d[i] = 0;
 
         m_wakeup_thread = new boost::thread(boost::bind(&Bserial::wakeup_thread, this));
 
         boost::asio::streambuf sb;
 
-        for(int p=0;p<1000;p++){
+        for (int p = 0; p < 1000; p++)
+        {
             //read(port,buffer(d,63));
             cout << "Reading...\n";
-            size_t n = read_until(*port,sb,'\n');
-            got_message=true;
-            std::string s( (std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>() );
+            size_t n = read_until(*port, sb, '\n');
+            got_message = true;
+            std::string s((std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>());
             std::cout << "n: " << n << " " << s;
-            for(int i=0;i<64;i++){
-                d[i] = d[i]==' '?'_':d[i];
-                d[i] = d[i]=='\n'?'*':d[i];
-                d[i] = d[i]=='\0'?'&':d[i];
+            for (int i = 0; i < 64; i++)
+            {
+                d[i] = d[i] == ' ' ? '_' : d[i];
+                d[i] = d[i] == '\n' ? '*' : d[i];
+                d[i] = d[i] == '\0' ? '&' : d[i];
                 cout << d[i];
             }
             cout << '\n';
 
             std::cout << "Force writing\n";
-            write(*port,buffer("0 0 0 0 0 0 0\n"));
+            write(*port, buffer("0 0 0 0 0 0 0\n"));
             std::chrono::duration<int, std::micro> microsecond{1};
-            this_thread::sleep_for(50000*microsecond);
+            this_thread::sleep_for(50000 * microsecond);
         }
 
-
-
-
         //io.run();
-
-
-
     }
-    void msg(){
-
+    void msg()
+    {
     }
 
-    boost::thread* m_wakeup_thread;
-    serial_port* port;
+    boost::thread *m_wakeup_thread;
+    serial_port *port;
     bool got_message;
     bool running;
 };
@@ -180,8 +195,6 @@ int main()
 
 #endif
 
-
-
 #ifdef SIMPLE_EXAMPE
 int main()
 {
@@ -192,30 +205,30 @@ int main()
     cout << "Found " << a << " devices\n";
     cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
 
+    if (!a)
+        return 0; // no devices found
 
-    if(!a) return 0; // no devices found
-
-    HaptikfabrikenInterface hi(Kinematics::configuration::woodenhaptics_v2015(),
+    HaptikfabrikenInterface hi(Kinematics::configuration::polhem_v3(),
                                HaptikfabrikenInterface::USB);
     hi.open();
-
 
     std::this_thread::sleep_for(hundred_milliseconds);
     std::this_thread::sleep_for(hundred_milliseconds);
 
     //hi.calibrate(); // for woodenhaptics
 
+    bool active_phase = true;
 
-    bool active_phase=true;
+    fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
 
-    fsVec3d thetas_start = hi.getBodyAngles()*(180/3.141592);
-
-    bool go=0;
-    while(active_phase){
-        if(_kbhit()) {
+    bool go = 0;
+    while (active_phase)
+    {
+        if (_kbhit())
+        {
             char cc;
             std::cin >> cc;
-            active_phase=false;
+            active_phase = false;
         }
 
         //continue;
@@ -223,31 +236,28 @@ int main()
         fsVec3d v = hi.getPos();
         int e[6];
         hi.getEnc(e);
-        fsVec3d thetas = hi.getBodyAngles()*(180/3.141592);
+        fsVec3d thetas = hi.getBodyAngles() * (180 / 3.141592);
 
         double dtheta = thetas.m_x - thetas_start.m_x;
 
-
-        go=!go;
+        go = !go;
 
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
-        fsVec3d c(0.000,0,0);
+        fsVec3d c(0.000, 0, 0);
         hi.setCurrent(c);
         //hi.setForce(fsVec3d(1,0,0));
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
 
-
         std::cout << "dtheta; " << dtheta << " P: " << toString(v)
                   << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
-                              << e[3] << " " << e[4] << " " << e[5]
-                  << " t: "<< toString(thetas)
+                  << e[3] << " " << e[4] << " " << e[5]
+                  << " t: " << toString(thetas)
                   << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
-                  <<"!!!\n";
+                  << "!!!\n";
 
-
-        std::this_thread::sleep_for(100*one_millisecond);
+        std::this_thread::sleep_for(100 * one_millisecond);
     }
 
     cout << "Goodbye World!" << endl;
@@ -255,56 +265,55 @@ int main()
 }
 #endif
 
-
-
 #ifdef LISTENER_EXAMPLE
 /*
  *
  *  Haptic Listner example
  *
  */
-class MyHapticListener : public HapticListener {
-       void positionEvent(HapticValues& hv){
-           fsVec3d f = -100 * hv.position;
-           hv.nextForce = f;
-       }
-       MyHapticListener(){
-           t1 = high_resolution_clock::now();
-           t2=t1;
-       }
+class MyHapticListener : public HapticListener
+{
+    void positionEvent(HapticValues &hv)
+    {
+        fsVec3d f = -100 * hv.position;
+        hv.nextForce = f;
+    }
+    MyHapticListener()
+    {
+        t1 = high_resolution_clock::now();
+        t2 = t1;
+    }
 
-       high_resolution_clock::time_point t1,t2;
+    high_resolution_clock::time_point t1, t2;
 };
-
-
 
 int main()
 {
     cout << "Hello World!" << endl;
-
 
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::polhem_v3(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 
-   // std::this_thread::sleep_for(hundred_milliseconds);
-
+    // std::this_thread::sleep_for(hundred_milliseconds);
 
     // Add our listener
-    MyHapticListener* myHapticListener = new MyHapticListener();
+    MyHapticListener *myHapticListener = new MyHapticListener();
     hi.addEventListener(myHapticListener);
 
     // Main loop
-    bool running=true;
-    while(running){
-        if(_kbhit()) running=false;
+    bool running = true;
+    while (running)
+    {
+        if (_kbhit())
+            running = false;
 
         int enc[6];
         hi.getEnc(enc);
 
-        std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << " " <<
-                  enc[0] << " " << enc[1] << " " << enc[2] << " " << "\n";
+        std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << " " << enc[0] << " " << enc[1] << " " << enc[2] << " "
+                  << "\n";
 
         // Just wait for keyboard hit
         this_thread::sleep_for(std::chrono::microseconds(100000)); // 100ms
@@ -318,147 +327,111 @@ int main()
 
     char c;
     std::cin >> c;
-
-
 }
 #endif // LISTENER_EXAMPLE
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #ifdef SENSORYA_PWM_EXPERIMENTATION
 int SetPWM(uint board, uint ctr, uint ontime, uint offtime)
 {
-  S826_CounterPreloadWrite(board, ctr, 0, ontime);   // On time in us.
-  S826_CounterPreloadWrite(board, ctr, 1, offtime);  // Off time in us.
+    S826_CounterPreloadWrite(board, ctr, 0, ontime);  // On time in us.
+    S826_CounterPreloadWrite(board, ctr, 1, offtime); // Off time in us.
 }
 
 int CreatePWM(uint board, uint ctr, uint ontime, uint offtime)
 {
-  S826_CounterModeWrite(board, ctr,        // Configure counter for PWM:
-//    S826_CM_K_1MHZ |                       //   clock = internal 1 MHz
-                        S826_CM_K_50MHZ |                       //   clock = internal 1 MHz
-    S826_CM_UD_REVERSE |                   //   count down
-    S826_CM_PX_START | S826_CM_PX_ZERO |   //   preload @startup and counts==0
-    S826_CM_BP_BOTH |                      //   use both preloads (toggle)
-    S826_CM_OM_PRELOAD|
-                        S826_CM_OP_INVERT);                   //   assert ExtOut during preload0 interval
-  SetPWM(board, ctr, ontime, offtime);     // Program initial on/off times.
+    S826_CounterModeWrite(board, ctr,                              // Configure counter for PWM:
+                                                                   //    S826_CM_K_1MHZ |                       //   clock = internal 1 MHz
+                          S826_CM_K_50MHZ |                        //   clock = internal 1 MHz
+                              S826_CM_UD_REVERSE |                 //   count down
+                              S826_CM_PX_START | S826_CM_PX_ZERO | //   preload @startup and counts==0
+                              S826_CM_BP_BOTH |                    //   use both preloads (toggle)
+                              S826_CM_OM_PRELOAD |
+                              S826_CM_OP_INVERT); //   assert ExtOut during preload0 interval
+    SetPWM(board, ctr, ontime, offtime);          // Program initial on/off times.
 
-  S826_CounterSnapshotConfigWrite(0,1,S826_SSRMASK_ZERO,S826_BITWRITE);
+    S826_CounterSnapshotConfigWrite(0, 1, S826_SSRMASK_ZERO, S826_BITWRITE);
 }
 
 int StartPWM(uint board, uint ctr)
 {
-  return S826_CounterStateWrite(board, ctr, 1);      // Start the PWM generator.
+    return S826_CounterStateWrite(board, ctr, 1); // Start the PWM generator.
 }
-
 
 int RouteCounterOutput(uint board, uint ctr, uint dio)
 {
-  uint data[2];      // dio routing mask
-  if ((dio >= S826_NUM_DIO) || (ctr >= S826_NUM_COUNT))
-    return S826_ERR_VALUE;  // bad channel number
-  if ((dio & 7) != ctr)
-    return S826_ERR_VALUE;  // counter output can't be routed to dio
+    uint data[2]; // dio routing mask
+    if ((dio >= S826_NUM_DIO) || (ctr >= S826_NUM_COUNT))
+        return S826_ERR_VALUE; // bad channel number
+    if ((dio & 7) != ctr)
+        return S826_ERR_VALUE; // counter output can't be routed to dio
 
-  // Route counter output to DIO pin:
-  S826_SafeWrenWrite(board, S826_SAFEN_SWE);        // Enable writes to DIO signal router.
-  S826_DioOutputSourceRead(board, data);            // Route counter output to DIO
-  data[dio > 23] |= (1 << (dio % 24));              //   without altering other routes.
-  S826_DioOutputSourceWrite(board, data);
-  return S826_SafeWrenWrite(board, S826_SAFEN_SWD); // Disable writes to DIO signal router.
+    // Route counter output to DIO pin:
+    S826_SafeWrenWrite(board, S826_SAFEN_SWE); // Enable writes to DIO signal router.
+    S826_DioOutputSourceRead(board, data);     // Route counter output to DIO
+    data[dio > 23] |= (1 << (dio % 24));       //   without altering other routes.
+    S826_DioOutputSourceWrite(board, data);
+    return S826_SafeWrenWrite(board, S826_SAFEN_SWD); // Disable writes to DIO signal router.
 }
 
-int main() {
+int main()
+{
     // Open connection
     int status = S826_SystemOpen();
-    if(status<0) return status; // Error, could not open.
+    if (status < 0)
+        return status; // Error, could not open.
 
-    S826_DacDataWrite(0,3,0xFFFF,0); // Channel 3 pin 48 PCB VERSION 2
+    S826_DacDataWrite(0, 3, 0xFFFF, 0); // Channel 3 pin 48 PCB VERSION 2
 
     // 10.000 = 5khz   available for data 80% = 8000 (12 bit is 4096)
     // 50.000 = 1khz
     // 25.000 = 2khz
     // Example: Configure counter0 and dio0 as a PWM generator; ontime = 900, offtime = 500 microseconds.
     const int pwm_period_ticks = 10000;
-    CreatePWM(0, 1, 0.5*pwm_period_ticks, 0.5*pwm_period_ticks);    // Configure counter0 as PWM.
-    RouteCounterOutput(0, 1, 1);     // Route counter0 output to dio 1, e.g. j3 pin 45
-    StartPWM(0, 1);                  // Start the PWM running.
+    CreatePWM(0, 1, 0.5 * pwm_period_ticks, 0.5 * pwm_period_ticks); // Configure counter0 as PWM.
+    RouteCounterOutput(0, 1, 1);                                     // Route counter0 output to dio 1, e.g. j3 pin 45
+    StartPWM(0, 1);                                                  // Start the PWM running.
 
-    S826_SafeControlWrite(0,0,0); // No safemode!
+    S826_SafeControlWrite(0, 0, 0); // No safemode!
 
     uint counts;
 
-    int ontime=100;
-    int dio_channel=24-1;
+    int ontime = 100;
+    int dio_channel = 24 - 1;
     bool on = false;
-    while(!_kbhit()){
-
-
+    while (!_kbhit())
+    {
 
         //ontime+=100;
         //if(ontime>5000000) ontime=5000000; // 90% max, 10% min
 
-
-
         uint reason;
-        S826_CounterSnapshotRead(0,1,0,0,&reason,S826_WAIT_INFINITE);
+        S826_CounterSnapshotRead(0, 1, 0, 0, &reason, S826_WAIT_INFINITE);
         uint status;
-        S826_CounterStatusRead(0,1,&status);
+        S826_CounterStatusRead(0, 1, &status);
         //if(!(status & (1<<16))) std::cout << "1..\n"; else std::cout << "0";
         //std::cout << reason << "\n";
 
         uint data[2];
-        S826_DioOutputRead(0,data);
+        S826_DioOutputRead(0, data);
         //if(data[1]) std::cout << "data: " << data[1] << "\n";
 
-        S826_CounterRead(0,1,&counts);
+        S826_CounterRead(0, 1, &counts);
         //std::cout << "coutns: " << counts << "\n";
 
-        on=!on;
-        data[0]= (1<<0);
-        if(on){
-            S826_DioOutputWrite(0,data,S826_BITSET);
-            SetPWM(0, 1, 0.4*pwm_period_ticks, 0.6*pwm_period_ticks);
+        on = !on;
+        data[0] = (1 << 0);
+        if (on)
+        {
+            S826_DioOutputWrite(0, data, S826_BITSET);
+            SetPWM(0, 1, 0.4 * pwm_period_ticks, 0.6 * pwm_period_ticks);
         }
-        else{
-            S826_DioOutputWrite(0,data,S826_BITCLR);
-            SetPWM(0, 1, 0.5*pwm_period_ticks, 0.5*pwm_period_ticks);
+        else
+        {
+            S826_DioOutputWrite(0, data, S826_BITCLR);
+            SetPWM(0, 1, 0.5 * pwm_period_ticks, 0.5 * pwm_period_ticks);
         }
 
-
-/*
+        /*
         if(status && (1<<16)) std::cout << "1..\n"; else cout << "0..\n";
         //S826_CounterSnapshotRead(0,1,0,0,0,S826_WAIT_INFINITE);
         S826_CounterStatusRead(0,1,&status);
@@ -504,16 +477,14 @@ int main() {
         */
 
         //std::cout << "Ontime %: " << 100*float(ontime)/10000 << "\n";
-        std::this_thread::sleep_for(30*one_millisecond);
+        std::this_thread::sleep_for(30 * one_millisecond);
     }
 
-    SetPWM(0, 1, 0.1*25000, 0.9*25000);     // Program initial on/off times.
+    SetPWM(0, 1, 0.1 * 25000, 0.9 * 25000); // Program initial on/off times.
 
-    S826_DacDataWrite(0,3,0,0); // Channel 3 pin 48 PCB VERSION 2
-
+    S826_DacDataWrite(0, 3, 0, 0); // Channel 3 pin 48 PCB VERSION 2
 }
 #endif
-
 
 #ifdef OVERDRIVE_EXPERIMENT
 
@@ -521,25 +492,16 @@ int main()
 {
     cout << "Hello World!" << endl;
 
-
     HaptikfabrikenInterface hi(false,
                                Kinematics::configuration::woodenhaptics_v2015(),
                                HaptikfabrikenInterface::DAQ);
     hi.open();
 
-
     std::this_thread::sleep_for(hundred_milliseconds);
     std::this_thread::sleep_for(hundred_milliseconds);
     hi.calibrate();
 
-
-
-
-
-
-
-
-/*
+    /*
 
 
 
@@ -569,22 +531,22 @@ int main()
 
 */
 
-
-
     int printcount = 100;
 
-    double t=0;
+    double t = 0;
 
-    bool active_phase=true;
+    bool active_phase = true;
 
-    fsVec3d thetas_start = hi.getBodyAngles()*(180/3.141592);
+    fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
 
-    int current=1;
-    while(active_phase){
-        if(_kbhit()) {
+    int current = 1;
+    while (active_phase)
+    {
+        if (_kbhit())
+        {
             char cc;
             std::cin >> cc;
-            active_phase=false;
+            active_phase = false;
         }
 
         //continue;
@@ -592,10 +554,9 @@ int main()
         fsVec3d v = hi.getPos();
         int e[6];
         hi.getEnc(e);
-        fsVec3d thetas = hi.getBodyAngles()*(180/3.141592);
+        fsVec3d thetas = hi.getBodyAngles() * (180 / 3.141592);
 
         double dtheta = thetas.m_x - thetas_start.m_x;
-
 
         double k = 1500;
         /*
@@ -607,8 +568,8 @@ int main()
         */
 
         fsVec3d f;
-        if(v.m_y>0.01) f.m_y = -k*(v.m_y-0.01);
-
+        if (v.m_y > 0.01)
+            f.m_y = -k * (v.m_y - 0.01);
 
         // Set force
         //hi.setForce(f);
@@ -617,11 +578,12 @@ int main()
 
         fsVec3d c;
         c.zero();
-        if(dtheta>0){
-            c.m_x = -dtheta*0.25; // 20 degrees = 5 amps
+        if (dtheta > 0)
+        {
+            c.m_x = -dtheta * 0.25; // 20 degrees = 5 amps
 
-
-            if(c.m_x < -5) c.m_x = -5;
+            if (c.m_x < -5)
+                c.m_x = -5;
         }
 
         hi.setCurrent(c);
@@ -629,29 +591,26 @@ int main()
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
 
-        if(printcount--==0){
-            t+=0.1;
+        if (printcount-- == 0)
+        {
+            t += 0.1;
 
             std::cout << "dtheta; " << dtheta << " P: " << toString(v)
                       << " enc: " << e[0] << " " << e[1] << " " << e[2] << " "
-                                  << e[3] << " " << e[4] << " " << e[5]
-                      << " t: "<< toString(thetas)
-                      << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]  <<
-                         " " <<  hi.getNumReceivedMessages() << " " << hi.getNumSentMessages() <<
-                      " " <<  hi.getNumReceivedMessages()/t << " " << hi.getNumSentMessages()/t
-                      <<"\n";
+                      << e[3] << " " << e[4] << " " << e[5]
+                      << " t: " << toString(thetas)
+                      << " ma: " << ma[0] << " " << ma[1] << " " << ma[2] << " " << hi.getNumReceivedMessages() << " " << hi.getNumSentMessages() << " " << hi.getNumReceivedMessages() / t << " " << hi.getNumSentMessages() / t
+                      << "\n";
 
-             printcount = 100;
+            printcount = 100;
         }
 
-
-        std::this_thread::sleep_for(1*one_millisecond);
-        current=!current;
+        std::this_thread::sleep_for(1 * one_millisecond);
+        current = !current;
     }
 
     cout << "Goodbye World!" << endl;
     hi.close();
-
 
     /*
 
@@ -690,12 +649,5 @@ int main()
 
 
 */
-
-
-
-
-
-
-
 }
 #endif // EXAMPLE
