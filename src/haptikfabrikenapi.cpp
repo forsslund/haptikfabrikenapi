@@ -142,7 +142,7 @@ public:
 
 
 
-std::string haptikfabriken::HaptikfabrikenInterface::serialport;
+std::string haptikfabriken::HaptikfabrikenInterface::serialport_name;
 unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
 {
     using namespace boost::asio;
@@ -175,7 +175,8 @@ unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
 
                 std::cout << "Read: " << rsp;
                 if(rsp.length() > 10 && rsp.length()<65){
-                    serialport = str;
+                    serialport_name = str;
+                    port.close();
                     return 1;
                 }
 
@@ -188,20 +189,20 @@ unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
     return 0;
 }
 
-haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_next_message,
+haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(
        haptikfabriken::Kinematics::configuration c, Protocol protocol):kinematicModel(c),fsthread(nullptr)
 {
     switch(protocol){
     case DAQ:
-        fsthread = new FsDAQHapticDeviceThread(wait_for_next_message,c);
+        fsthread = new FsDAQHapticDeviceThread(c);
         break;
     case USB:
 #ifdef USE_USB_HID
-        fsthread = new FsUSBHapticDeviceThread(wait_for_next_message,c);
+        fsthread = new FsUSBHapticDeviceThread(c,serialport_name);
 #endif
         break;
     case UDP:
-        fsthread = new FsHapticDeviceThread(wait_for_next_message,c);
+        fsthread = new FsHapticDeviceThread(c);
         break;
     }
 }

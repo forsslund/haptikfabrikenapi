@@ -41,9 +41,9 @@ constexpr int PCB = POLHEM_USB;
 
 namespace haptikfabriken {
 
-FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(bool wait_for_next_message,
-                                                 Kinematics::configuration c):
-    FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c)
+FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(Kinematics::configuration c,
+                                                 std::string serialport_name):
+    FsHapticDeviceThread::FsHapticDeviceThread(c), serialport_name(serialport_name)
   #ifdef USE_WBESRV
   ,w(0)
   #endif
@@ -113,7 +113,7 @@ void FsUSBHapticDeviceThread::thread()
     // Boost style serial comm.
     using namespace boost::asio;
     boost::asio::io_service io;
-    port = new serial_port(io, "/dev/ttyACM0");
+    port = new serial_port(io, serialport_name); // Set in constructor, but can be found with a static call in haptikfabrikenapi
     //port = new serial_port(io, "COM9");
     m_wakeup_thread = new boost::thread(boost::bind(&FsUSBHapticDeviceThread::wakeup_thread, this));
 

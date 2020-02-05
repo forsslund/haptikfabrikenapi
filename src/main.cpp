@@ -187,16 +187,15 @@ int main()
 {
     cout << "Hello World!" << endl;
 
-    cout << "Serialport name: " << HaptikfabrikenInterface::serialport << "\n";
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
     unsigned int a = HaptikfabrikenInterface::findUSBSerialDevices();
     cout << "Found " << a << " devices\n";
-    cout << "Serialport name: " << HaptikfabrikenInterface::serialport << "\n";
-
-    /*
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
 
 
-    HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::woodenhaptics_v2015(),
+    if(!a) return 0; // no devices found
+
+    HaptikfabrikenInterface hi(Kinematics::configuration::woodenhaptics_v2015(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 
@@ -253,7 +252,6 @@ int main()
 
     cout << "Goodbye World!" << endl;
     hi.close();
-    */
 }
 #endif
 

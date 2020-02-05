@@ -81,8 +81,8 @@ struct pc_to_hid_message {  // 7*2 = 14 bytes + 1 inital byte always 0
 class FsUSBHapticDeviceThread : public FsHapticDeviceThread
 {
 public:
-    FsUSBHapticDeviceThread(bool wait_for_next_message=false,
-        Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015());
+    FsUSBHapticDeviceThread(Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015(),
+                            std::string serialport_name="");
 
     void thread();
     void close();
@@ -94,6 +94,7 @@ public:
 
     void calibrate();
     void wakeup_thread();
+    const std::string serialport_name;
 
 
 private:

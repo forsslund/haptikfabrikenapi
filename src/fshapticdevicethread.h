@@ -40,8 +40,7 @@ using boost::asio::ip::udp;
 class FsHapticDeviceThread
 {
 public:
-    FsHapticDeviceThread(bool wait_for_next_message=false,
-                         Kinematics::configuration c=Kinematics::configuration::polhem_v1());
+    FsHapticDeviceThread(Kinematics::configuration c=Kinematics::configuration::polhem_v1());
     void server(boost::asio::io_service& io_service, unsigned short port);
     virtual ~FsHapticDeviceThread() {}
     virtual void thread();
@@ -64,9 +63,6 @@ public:
 
     boost::interprocess::interprocess_semaphore sem_force_sent;
     boost::interprocess::interprocess_semaphore sem_getpos;
-
-    bool newforce;
-    const bool wait_for_next_message;
     Kinematics kinematics;
     chrono::steady_clock::time_point app_start;
 
@@ -177,27 +173,13 @@ public:
         useCurrentDirectly = false;
         mtx_force.lock();
         nextForce = f;
-        newforce = true;
         mtx_force.unlock();
-
-        // wait until at least one new force message has been sent (received a new package)
-        if(wait_for_next_message)
-            sem_force_sent.wait();
-
-        //if(blocking){
-        //    sem_setforce.post();
-        //}
     }
     inline void setCurrent(fsVec3d amps){
         useCurrentDirectly = true;
         mtx_force.lock();
         nextCurrent = amps;
-        newforce = true;
         mtx_force.unlock();
-
-        // wait until at least one new force message has been sent (received a new package)
-        if(wait_for_next_message)
-            sem_force_sent.wait();
     }
 
 

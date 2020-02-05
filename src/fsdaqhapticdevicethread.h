@@ -14,10 +14,10 @@ namespace haptikfabriken {
 class FsDAQHapticDeviceThread : public FsHapticDeviceThread
 {
 public:
-    FsDAQHapticDeviceThread(bool wait_for_next_message=false,
+    FsDAQHapticDeviceThread(
         Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015()):
-        FsHapticDeviceThread::FsHapticDeviceThread(wait_for_next_message,c),
-        m_ixthread{0,0,0,0,0,0},enable_calibration_button_ix0(false)
+        FsHapticDeviceThread::FsHapticDeviceThread(c),
+        m_ixthread{nullptr},enable_calibration_button_ix0(false)
     #ifdef USE_WEBSERV
       ,w(0)
   #endif

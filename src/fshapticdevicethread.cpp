@@ -35,12 +35,6 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
     udp::endpoint sender_endpoint;
     size_t length = sock.receive_from(
         boost::asio::buffer(data, max_length), sender_endpoint);
-    mtx_force.lock();
-    if(wait_for_next_message && newforce){
-        sem_force_sent.post();
-        newforce=false;
-    }
-    mtx_force.unlock();
 
 
 /*
@@ -72,14 +66,6 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
         int rot[]  = {in->getEnc(3), in->getEnc(4), in->getEnc(5)};
         fsRot r = kinematics.computeRotation(base,rot);
         fsVec3d angles = kinematics.computeBodyAngles(base);
-/*
-        std::cout << "Ch readings: " << ch_a << ", " << ch_b << ", " << ch_c << "      " << rot[0] << "," << rot[1] << "," << rot[2] << "\n";
-        //std::cout << in->toString() << "\n";
-        std::cout << "Computed position: " << pos.x() << "," << pos.y() << "," << pos.z() << "\n";
-        std::cout << "Computed rotation: [" << r.m[0][0] << " " << r.m[0][1] << " " << r.m[0][2] << "\n"
-                                            << r.m[1][0] << " " << r.m[1][1] << " " << r.m[1][2] << "\n"
-                                            << r.m[2][0] << " " << r.m[2][1] << " " << r.m[2][2] << " ]\n\n";
-                                            */
         mtx_pos.lock();
         latestBodyAngles = angles;
         latestPos = pos;
@@ -215,8 +201,8 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
 }
 }
 
-FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message, Kinematics::configuration c):
-    sem_force_sent(0),sem_getpos(0), newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
+FsHapticDeviceThread::FsHapticDeviceThread(Kinematics::configuration c):
+    sem_force_sent(0),sem_getpos(0),kinematics(Kinematics(c))
 {
     std::cout << "FsHapticDeviceThread::FsHapticDeviceThread()\n";
     app_start = chrono::steady_clock::now();
