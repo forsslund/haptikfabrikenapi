@@ -445,6 +445,11 @@ public:
 
     HaptikfabrikenInterface(Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
                             Protocol protocol=DAQ);
+
+    // Deprecated constructor. Signature kept for backwards compatability.
+    HaptikfabrikenInterface(bool, Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
+                            Protocol protocol=DAQ);
+
     ~HaptikfabrikenInterface();
 
 

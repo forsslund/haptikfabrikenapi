@@ -173,8 +173,8 @@ unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
     return 0;
 }
 
-haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(
-    haptikfabriken::Kinematics::configuration c, Protocol protocol) : kinematicModel(c), fsthread(nullptr)
+haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(haptikfabriken::Kinematics::configuration c,
+                                                                 haptikfabriken::HaptikfabrikenInterface::Protocol protocol): kinematicModel(c), fsthread(nullptr)
 {
     switch (protocol)
     {
@@ -192,6 +192,10 @@ haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(
         break;
     }
 }
+
+haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool, haptikfabriken::Kinematics::configuration c,
+                haptikfabriken::HaptikfabrikenInterface::Protocol protocol):haptikfabriken::HaptikfabrikenInterface(c,protocol){}
+
 
 haptikfabriken::HaptikfabrikenInterface::~HaptikfabrikenInterface()
 {
