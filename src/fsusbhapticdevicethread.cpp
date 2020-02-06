@@ -40,7 +40,7 @@ namespace haptikfabriken
 
 FsUSBHapticDeviceThread::FsUSBHapticDeviceThread(Kinematics::configuration c,
                                                  std::string serialport_name) : FsHapticDeviceThread::FsHapticDeviceThread(c), serialport_name(serialport_name)
-#ifdef USE_WBESRV
+#ifdef USE_WEBSERV
                                                                                 ,
                                                                                 w(0)
 #endif
