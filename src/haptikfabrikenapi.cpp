@@ -1,6 +1,8 @@
 #include "haptikfabrikenapi.h"
 #include "fshapticdevicethread.h"
+#ifdef USE_DAQ
 #include "fsdaqhapticdevicethread.h"
+#endif
 #ifdef USE_USB_HID
 #include "fsusbhapticdevicethread.h"
 #endif
@@ -179,11 +181,17 @@ haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(haptikfabriken:
     switch (protocol)
     {
     case DAQ:
+#ifdef USE_DAQ
         fsthread = new FsDAQHapticDeviceThread(c);
+#else
+        std::cout << "Haptikfabriken compiled without DAQ support.\n";
+#endif
         break;
     case USB:
-#ifdef USE_USB_HID
+#ifdef PURE_SERIAL
         HaptikfabrikenInterface::findUSBSerialDevices();
+#endif
+#ifdef USE_USB_HID
         fsthread = new FsUSBHapticDeviceThread(c, serialport_name);
 #endif
         break;

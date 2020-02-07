@@ -4,3 +4,6 @@ libhaptikfabrikenapi.*
 .qmake.stash
 Makefile
 *.user
+src/polhem.h
+build-*
+lib/*

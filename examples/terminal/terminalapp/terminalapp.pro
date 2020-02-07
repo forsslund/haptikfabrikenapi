@@ -7,21 +7,15 @@ SOURCES += main.cpp
 
 
 unix:!macx: LIBS += -lhaptikfabrikenapi
-win32: LIBS += -L$$PWD/../../../../build-haptikfabrikenapi-Desktop_Qt_5_9_1_MSVC2015_64bit-Release/release -lhaptikfabrikenapi
-
-
-
-
-INCLUDEPATH += $$PWD/../../../src
-DEPENDPATH += $$PWD/../../../src
+win32: LIBS += -L$$PWD/../../../lib -lhaptikfabrikenapi
+INCLUDEPATH += $$PWD/../../../lib
+DEPENDPATH += $$PWD/../../../lib
 
 unix: DEFINES += LINUX
 
 
-# Apparently needed...
-unix: LIBS += -lboost_system
-
 BOOST = F:\boost_1_62_0
+unix: LIBS += -lboost_system
 DEFINES += BOOST_COROUTINES_NO_DEPRECATION_WARNING
 DEFINES += BOOST_COROUTINE_NO_DEPRECATION_WARNING
 win32{
@@ -40,15 +34,10 @@ win32{
     LIBS += $${A}\chrono$${B}
 }
 
-win32: LIBS += -L$$PWD/../../../../build-haptikfabrikenapi-Desktop_Qt_5_9_1_MSVC2015_64bit-Release/release/ -lhaptikfabrikenapi
 
-INCLUDEPATH += $$PWD/../../../src
-DEPENDPATH += $$PWD/../../../src
-
-
-# If haptikfabriken.lib is built as static lib we will need to link with sensoray
-win32: LIBS += -L$$PWD/../../../external/sensoray/s826_3.3.9/api/x64/ -ls826
-INCLUDEPATH += $$PWD/../../../external/sensoray/s826_3.3.9/api
-DEPENDPATH += $$PWD/../../../external/sensoray/s826_3.3.9/api
+# If haptikfabriken.lib is built as static lib we will need to link with sensoray (if we use DAQ)
+#win32: LIBS += -L$$PWD/../../../external/sensoray/s826_3.3.9/api/x64/ -ls826
+#INCLUDEPATH += $$PWD/../../../external/sensoray/s826_3.3.9/api
+#DEPENDPATH += $$PWD/../../../external/sensoray/s826_3.3.9/api
 
 win32: LIBS += setupapi.lib

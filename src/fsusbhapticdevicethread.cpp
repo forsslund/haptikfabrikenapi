@@ -73,14 +73,15 @@ void FsUSBHapticDeviceThread::thread()
 
     // Open the device using the VID, PID,
     // and optionally the Serial number.
-    hid_device *handle = hid_open(0x1234, 0x6, nullptr);
+    hid_device *handle = hid_open(0x16C0 , 0x0486, nullptr);
+    //hid_device *handle = hid_open(0x1234, 0x6, nullptr);
     if (!handle)
     {
         std::cout << "unable to open device. Is it plugged in and you run with right permission (or as root?)\n";
         return;
     }
-    const int in_bytes = (protocol_version == 2) ? 15 : 9;
-    const int out_bytes = (protocol_version == 2) ? 15 : 9;
+    const int in_bytes = 64;//(protocol_version == 2) ? 15 : 9;
+    const int out_bytes = 65;//(protocol_version == 2) ? 15 : 9;
     unsigned char in_buf[in_bytes];
 #endif
 

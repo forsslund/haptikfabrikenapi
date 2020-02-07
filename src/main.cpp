@@ -200,15 +200,15 @@ int main()
 {
     cout << "Hello World!" << endl;
 
-    cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
+#ifdef PURE_SERIAL
     unsigned int a = HaptikfabrikenInterface::findUSBSerialDevices();
     cout << "Found " << a << " devices\n";
     cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
-
     if (!a)
         return 0; // no devices found
+#endif
 
-    HaptikfabrikenInterface hi(Kinematics::configuration::polhem_v3(),
+    HaptikfabrikenInterface hi(Kinematics::configuration::woodenhaptics_v2015(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 
@@ -273,6 +273,7 @@ int main()
  */
 class MyHapticListener : public HapticListener
 {
+public:
     void positionEvent(HapticValues &hv)
     {
         fsVec3d f = -100 * hv.position;
@@ -289,10 +290,9 @@ class MyHapticListener : public HapticListener
 
 int main()
 {
-    cout << "Hello World!" << endl;
+    cout << "Hello World Listener Example!" << endl;
 
-    HaptikfabrikenInterface hi(false,
-                               Kinematics::configuration::polhem_v3(),
+    HaptikfabrikenInterface hi(Kinematics::configuration::polhem_v3(),
                                HaptikfabrikenInterface::USB);
     hi.open();
 

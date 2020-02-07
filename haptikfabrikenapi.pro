@@ -11,10 +11,10 @@
 
 # ...and comment these lines out:
 TEMPLATE = lib
-CONFIG += dynamiclib
+#CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-#CONFIG += staticlib
+CONFIG += staticlib
 
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
@@ -38,10 +38,10 @@ TARGET = haptikfabrikenapi
 CONFIG(debug, debug|release):   TARGET = haptikfabrikenapi_d
 
 linux: target.path = /usr/local/lib
-win32: target.path = c:/chai3d-github/external/haptikfabrikenapi
+win32: target.path = lib/#c:/chai3d/external/haptikfabrikenapi
 header_files.files = src/haptikfabrikenapi.h
 linux: header_files.path = /usr/local/include
-win32: header_files.path = c:/chai3d-github/external/haptikfabrikenapi
+win32: header_files.path = lib/#c:/chai3d/external/haptikfabrikenapi
 INSTALLS += target
 INSTALLS += header_files
 
@@ -49,12 +49,11 @@ INSTALLS += header_files
 # Choose if you are using USB HID edition (currently only linux) or UDP (default) by commenting this line
 CONFIG += use_usb_hid
 CONFIG += use_webserv
-CONFIG += use_sensoray
+#CONFIG += use_sensoray
 CONFIG += polhemv2
 
 polhemv2 {
-    HEADERS += ../fs_polhem/haptikfabrikenapi-polhem/polhem.h
-    linux: HEADERS += src/polhem.h
+    HEADERS += src/polhem.h
     DEFINES += SUPPORT_POLHEMV2
 }
 
@@ -97,16 +96,16 @@ use_webserv {
     HEADERS += src/webserv.h src/client_http.h src/server_http.h
 }
 
-use_sensoray {
-    SOURCES += src/fsdaqhapticdevicethread.cpp
-    HEADERS += src/fsdaqhapticdevicethread.h
-    DEFINES += USE_DAQ
+#use_sensoray {
+#    SOURCES += src/fsdaqhapticdevicethread.cpp
+#    HEADERS += src/fsdaqhapticdevicethread.h
+#    DEFINES += USE_DAQ
 
-    unix: LIBS += -l826_64
-    unix: INCLUDEPATH += $$PWD/external/sensoray
-    unix: DEPENDPATH += $$PWD/external/sensoray
-#    unix:!macx: PRE_TARGETDEPS += $$PWD/external/sensoray/sdk_826_linux_3.3.11/middleware/lib826_64.a
-}
+#    unix: LIBS += -l826_64
+#    unix: INCLUDEPATH += $$PWD/external/sensoray
+#    unix: DEPENDPATH += $$PWD/external/sensoray
+#    win32: LIBS += -L$$PWD/external/sensoray/s826_3.3.9/api/x64/ -ls826
+#}
 
 
 DEFINES += BOOST_COROUTINES_NO_DEPRECATION_WARNING
@@ -149,6 +148,5 @@ unix {
 
 
 
-win32: LIBS += -L$$PWD/external/sensoray/s826_3.3.9/api/x64/ -ls826
 #win32: INCLUDEPATH += $$PWD/external/sensoray/s826_3.3.9/api
 #win32: DEPENDPATH += $$PWD/external/sensoray/s826_3.3.9/api
