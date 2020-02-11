@@ -144,9 +144,10 @@ public:
             //sem_getpos.wait();
             //while(sem_getpos.try_wait());
             while(num_getpos==0 && running){
-                using namespace std::chrono;
-                std::chrono::duration<int, std::micro> microsecond{1};
-                this_thread::sleep_for(100*microsecond);
+                //using namespace std::chrono;
+                //std::chrono::duration<int, std::micro> microsecond{1};
+                //this_thread::sleep_for(100*microsecond);
+                this_thread::yield();
             }
             num_getpos=0;
         }
@@ -269,7 +270,7 @@ public:
 
     boost::asio::io_service* io_service;
 
-    int max_milliamps = 6000;
+    short max_milliamps = 6000;
 
 
 

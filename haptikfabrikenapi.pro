@@ -64,6 +64,10 @@ BOOST = F:\boost_1_62_0
                         # https://gitlab.com/eidheim/Simple-Web-Server
 
 win32: DEFINES += WIN32
+win32: DEFINES += WINDOWS
+linux: DEFINES += LINUX
+mac:   DEFINES += MACOS
+
 
 
 
@@ -78,7 +82,8 @@ SOURCES +=   src/kinematics.cpp \
 HEADERS += src/kinematics.h \
     src/fshapticdevicethread.h \
     src/haptikfabrikenapi.h \
-    src/json.hpp # https://github.com/nlohmann/json/releases v. 3.7.0
+    src/json.hpp \ # https://github.com/nlohmann/json/releases v. 3.7.0
+    src/pjrcserialcomm.h
 
 
 

@@ -221,6 +221,10 @@ int main()
 
     fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
 
+
+
+
+
     bool go = 0;
     while (active_phase)
     {
@@ -243,9 +247,11 @@ int main()
         go = !go;
 
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
-        fsVec3d c(0.000, 0, 0);
-        hi.setCurrent(c);
-        //hi.setForce(fsVec3d(1,0,0));
+        //fsVec3d c(0.000, 0, 0);
+        //hi.setCurrent(c);
+        hi.setForce(fsVec3d(0,0,0));
+
+        continue;
 
         int ma[3];
         hi.getLatestCommandedMilliamps(ma);
@@ -259,6 +265,24 @@ int main()
 
         std::this_thread::sleep_for(100 * one_millisecond);
     }
+
+
+    high_resolution_clock::time_point t1, t2;
+    t1 = high_resolution_clock::now();
+    for(int i=0;i<1000;i++){
+
+        fsVec3d v = hi.getPos(true);
+
+    }
+    t2 = high_resolution_clock::now();
+
+    //elapsed = (double)(end.tv_sec - begin.tv_sec) * 1000.0;
+    //elapsed += (double)(end.tv_usec - begin.tv_usec) / 1000.0;
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    double elapsed = time_span.count();
+
+    cout << "elased: " <<  elapsed << " ms";
+
 
     cout << "Goodbye World!" << endl;
     hi.close();

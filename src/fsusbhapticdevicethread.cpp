@@ -11,6 +11,8 @@
 #include <thread>
 #include <chrono>
 
+#include "pjrcserialcomm.h"
+
 #ifndef UNIX
 void usleep(int us)
 {
@@ -99,7 +101,6 @@ void FsUSBHapticDeviceThread::thread()
     tell_hid_to_calibrate = false;
     bool forced_inital_calibration = PCB == WOODENHAPTICS ? true : false;
 
-    std::chrono::duration<int, std::micro> microsecond{1};
 
     hid_to_pc_message hid_to_pc;
     pc_to_hid_message pc_to_hid;
@@ -110,14 +111,20 @@ void FsUSBHapticDeviceThread::thread()
 
 #ifdef PURE_SERIAL
 
+#ifdef BOOST_SERIAL
     // Boost style serial comm.
+    std::chrono::duration<int, std::micro> microsecond{1};
     using namespace boost::asio;
     boost::asio::io_service io;
     port = new serial_port(io, serialport_name); // Set in constructor, but can be found with a static call in haptikfabrikenapi
     //port = new serial_port(io, "COM9");
+    char outstr[64];
+#endif
+
+    scom = new PJRCSerialComm();
+    scom->open(serialport_name);
     m_wakeup_thread = new boost::thread(boost::bind(&FsUSBHapticDeviceThread::wakeup_thread, this));
 
-    char outstr[64];
 #ifdef UNIX_NATIVE_SERIAL
     std::cout << "Opening /dev/ttyACM0\n";
 
@@ -178,6 +185,16 @@ void FsUSBHapticDeviceThread::thread()
     bool use_serial_for_enc5 = false;
     while (running)
     {
+        /*
+        scom->receive(hid_to_pc);
+        got_message = true; // Inform the "wake up" thread
+        num_getpos++;
+        firstMessage = true;
+        scom->send(pc_to_hid);
+        continue;
+        */
+
+
         t1 = high_resolution_clock::now();
 
         int receive_count_this_loop = 0;
@@ -198,21 +215,24 @@ void FsUSBHapticDeviceThread::thread()
 
 #ifdef PURE_SERIAL
 
+#ifdef BOOST_SERIAL
         boost::asio::streambuf sb;
-
         size_t num_bytes = read_until(*port, sb, '\n');
-
         if (num_bytes == 0)
         { // not happening with boost sync read
             pc_to_hid = {};
             pc_to_hid.toChars(outstr);
-            this_thread::sleep_for(100 * microsecond);
+            this_thread::sleep_for(100 * );
             std::cout << "initial\n";
             continue;
         }
         //hid_to_pc.fromChars(read_buf);
         std::string sbs((std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>());
         hid_to_pc.fromChars(sbs.c_str());
+#endif
+        scom->receive(hid_to_pc);
+
+
         got_message = true; // Inform the "wake up" thread
 
 #else
@@ -290,9 +310,9 @@ void FsUSBHapticDeviceThread::thread()
             hid_to_pc.encoder_d -= 10000;
             btn = true;
         }
-        mtx_pos.lock();
+        //mtx_pos.lock();
         latestSwitchesState[0] = btn;
-        mtx_pos.unlock();
+        //mtx_pos.unlock();
 
         // *************** COMPUTE POSITION ***********
         // Compute position
@@ -306,7 +326,7 @@ void FsUSBHapticDeviceThread::thread()
                            PCB == POLHEM_USB ? hid_to_pc.encoder_d : hid_to_pc.encoder_d + offset_encoders[3]}; // Encoder d,e,f here if recevied
         fsRot r = kinematics.computeRotation(base, rot);
         fsVec3d angles = kinematics.computeBodyAngles(base);
-        mtx_pos.lock();
+        //mtx_pos.lock();
         raw_enc[0] = hid_to_pc.encoder_a;
         raw_enc[1] = hid_to_pc.encoder_b;
         raw_enc[2] = hid_to_pc.encoder_c;
@@ -323,7 +343,7 @@ void FsUSBHapticDeviceThread::thread()
         latestEnc[4] = rot[1];
         latestEnc[5] = rot[2];
         num_received_messages += receive_count_this_loop;
-        mtx_pos.unlock();
+        //mtx_pos.unlock();
 
         if (forced_inital_calibration)
         {
@@ -348,15 +368,15 @@ void FsUSBHapticDeviceThread::thread()
         fsVec3d f;
         if (useCurrentDirectly)
         {
-            mtx_force.lock();
+            //mtx_force.lock();
             amps = nextCurrent;
-            mtx_force.unlock();
+            //mtx_force.unlock();
         }
         else
         {
-            mtx_force.lock();
+           // mtx_force.lock();
             f = nextForce;
-            mtx_force.unlock();
+          //  mtx_force.unlock();
             amps = kinematics.computeMotorAmps(f, base);
         }
 
@@ -395,8 +415,13 @@ void FsUSBHapticDeviceThread::thread()
         }
 
 #ifdef PURE_SERIAL
+
+#ifdef BOOST_SERIAL
         int len = pc_to_hid.toChars(outstr);
         write(*port, buffer(outstr, len));
+#endif
+        scom->send(pc_to_hid);
+
 #else
         // **************** SEND ***************
         unsigned char *msg_buf = reinterpret_cast<unsigned char *>(&pc_to_hid);
@@ -406,7 +431,7 @@ void FsUSBHapticDeviceThread::thread()
 #endif
         t2 = high_resolution_clock::now();
 
-        mtx_pos.lock();
+        //mtx_pos.lock();
         if (pc_to_hid.command == 0)
         {
             latestCommandedMilliamps[0] = pc_to_hid.current_motor_a_mA;
@@ -415,7 +440,7 @@ void FsUSBHapticDeviceThread::thread()
         }
         num_sent_messages++;
         currentForce = f;
-        mtx_pos.unlock();
+        //mtx_pos.unlock();
 
         // Set webserver info
 #ifdef USE_WEBSERV
@@ -457,9 +482,13 @@ void FsUSBHapticDeviceThread::thread()
     }
 #else
     m_wakeup_thread->join();
+
+#ifdef BOOST_SERIAL
     port->close();
     delete m_wakeup_thread;
     delete port;
+#endif
+
 #endif
 }
 
@@ -610,7 +639,10 @@ void FsUSBHapticDeviceThread::wakeup_thread()
         if (!got_message)
         {
             std::cout << "Init writing\n";
+#ifdef BOOST_SERIAL
             write(*port, boost::asio::buffer("0 0 0 0 0 0 0\n"));
+#endif
+            scom->sendWakeupMessage();
         }
         got_message = false;
     }

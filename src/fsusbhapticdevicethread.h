@@ -53,7 +53,7 @@ struct pc_to_hid_message
     short command_attr0;
     short command_attr1;
     short command_attr2;
-    int toChars(char *c)
+    int toChars(char *c) const
     {
         return sprintf(c, "%hd %hd %hd %hd %hd %hd %hd\n", current_motor_a_mA, current_motor_b_mA,
                        current_motor_c_mA, command, command_attr0, command_attr1, command_attr2);
@@ -66,6 +66,21 @@ struct pc_to_hid_message
 };
 #pragma pack(pop)
 
+
+#include <string>
+using namespace std;
+class SerialComm {
+public:
+    virtual void open(string portname) = 0;
+    virtual void close() = 0;
+    virtual void sendWakeupMessage(){pc_to_hid_message m; send(m);}
+    virtual void send(const pc_to_hid_message& msg) = 0;
+    virtual void receive(hid_to_pc_message& msg) = 0;
+    virtual ~SerialComm() {}
+};
+
+
+
 class FsUSBHapticDeviceThread : public FsHapticDeviceThread
 {
 public:
@@ -75,6 +90,8 @@ public:
     void thread();
     void close();
     int open();
+
+    SerialComm* scom;
 
     ~FsUSBHapticDeviceThread()
     {
