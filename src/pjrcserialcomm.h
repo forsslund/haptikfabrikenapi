@@ -17,6 +17,7 @@
 #include "fsusbhapticdevicethread.h" // For SerialComm class interface and pc_to_hid_message
 
 
+
 namespace haptikfabriken {
 
 
@@ -241,21 +242,21 @@ PORTTYPE open_port_and_set_baud_or_die(const char *name, long baud)
 #if defined(MACOSX)
     struct termios tinfo;
     fd = open(name, O_RDWR | O_NONBLOCK);
-    if (fd < 0) die("unable to open port %s\n", name);
-    if (tcgetattr(fd, &tinfo) < 0) die("unable to get serial parms\n");
-    if (cfsetspeed(&tinfo, baud) < 0) die("error in cfsetspeed\n");
+    if (fd < 0)printf("unable to open port %s\n", name);
+    if (tcgetattr(fd, &tinfo) < 0)printf("unable to get serial parms\n");
+    if (cfsetspeed(&tinfo, baud) < 0)printf("error in cfsetspeed\n");
     tinfo.c_cflag |= CLOCAL;
-    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) die("unable to set baud rate\n");
+    if (tcsetattr(fd, TCSANOW, &tinfo) < 0)printf("unable to set baud rate\n");
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
 #elif defined(LINUX)
     struct termios tinfo;
     struct serial_struct kernel_serial_settings;
     int r;
     fd = open(name, O_RDWR);
-    if (fd < 0) die("unable to open port %s\n", name);
-    if (tcgetattr(fd, &tinfo) < 0) die("unable to get serial parms\n");
-    if (cfsetspeed(&tinfo, baud) < 0) die("error in cfsetspeed\n");
-    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) die("unable to set baud rate\n");
+    if (fd < 0)printf("unable to open port %s\n", name);
+    if (tcgetattr(fd, &tinfo) < 0)printf("unable to get serial parms\n");
+    if (cfsetspeed(&tinfo, baud) < 0)printf("error in cfsetspeed\n");
+    if (tcsetattr(fd, TCSANOW, &tinfo) < 0)printf("unable to set baud rate\n");
     r = ioctl(fd, TIOCGSERIAL, &kernel_serial_settings);
     if (r >= 0) {
         kernel_serial_settings.flags |= ASYNC_LOW_LATENCY;
@@ -314,7 +315,7 @@ int receive_bytes(PORTTYPE port, char *buf, int len)
     int retry=0;
     //char buf[512];
 
-    if (len > sizeof(buf) || len < 1) return -1;
+    //if (len > sizeof(buf) || len < 1) return -1;
     // non-blocking read mode
     fcntl(port, F_SETFL, fcntl(port, F_GETFL) | O_NONBLOCK);
     while (count < len) {
@@ -629,21 +630,21 @@ PORTTYPE open_port_and_set_baud_or_die(const char *name, long baud)
 #if defined(MACOSX)
     struct termios tinfo;
     fd = open(name, O_RDWR | O_NONBLOCK);
-    if (fd < 0) die("unable to open port %s\n", name);
-    if (tcgetattr(fd, &tinfo) < 0) die("unable to get serial parms\n");
-    if (cfsetspeed(&tinfo, baud) < 0) die("error in cfsetspeed\n");
+    if (fd < 0) printf("unable to open port %s\n", name);
+    if (tcgetattr(fd, &tinfo) < 0) printf("unable to get serial parms\n");
+    if (cfsetspeed(&tinfo, baud) < 0) printf("error in cfsetspeed\n");
     tinfo.c_cflag |= CLOCAL;
-    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) die("unable to set baud rate\n");
+    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) printf("unable to set baud rate\n");
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
 #elif defined(LINUX)
     struct termios tinfo;
     struct serial_struct kernel_serial_settings;
     int r;
     fd = open(name, O_RDWR);
-    if (fd < 0) die("unable to open port %s\n", name);
-    if (tcgetattr(fd, &tinfo) < 0) die("unable to get serial parms\n");
-    if (cfsetspeed(&tinfo, baud) < 0) die("error in cfsetspeed\n");
-    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) die("unable to set baud rate\n");
+    if (fd < 0) printf("unable to open port %s\n", name);
+    if (tcgetattr(fd, &tinfo) < 0) printf("unable to get serial parms\n");
+    if (cfsetspeed(&tinfo, baud) < 0) printf("error in cfsetspeed\n");
+    if (tcsetattr(fd, TCSANOW, &tinfo) < 0) printf("unable to set baud rate\n");
     r = ioctl(fd, TIOCGSERIAL, &kernel_serial_settings);
     if (r >= 0) {
         kernel_serial_settings.flags |= ASYNC_LOW_LATENCY;
