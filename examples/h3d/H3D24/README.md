@@ -1,3 +1,9 @@
+Built from source 2020-02-17 using Visual Studio 2019
+and patch from https://github.com/forsslund/haptikfabrikenapi/tree/master/examples/h3d/H3D24
+
+Install:
+Copy/replace the files in your installation folder of H3DAPI 2.4!
+
 To build from source:
 Copy these files to your installed H3D 2.4 folder, replacing the current files.
 Run cmake and specify haptikfabrikenapi.lib and .h folder

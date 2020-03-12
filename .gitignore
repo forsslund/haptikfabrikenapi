@@ -3,7 +3,7 @@ external/sensoray/sdk_826_linux_3.3.11
 libhaptikfabrikenapi.*
 .qmake.stash
 Makefile
-*.user
+*.user*
 src/polhem.h
 build-*
 lib/*

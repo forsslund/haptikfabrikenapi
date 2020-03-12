@@ -499,6 +499,10 @@ void FsUSBHapticDeviceThread::close()
 
 int FsUSBHapticDeviceThread::open()
 {
+    std::cout << "In FsUSBHapticDeviceThread::open()\n";
+#ifdef PURE_SERIAL
+    if(serialport_name.length()==0) return 1;
+#endif
     std::chrono::duration<int, std::micro> microsecond{1};
     this_thread::sleep_for(100000 * microsecond);
 
@@ -508,7 +512,7 @@ int FsUSBHapticDeviceThread::open()
     while (!firstMessage)
         this_thread::sleep_for(1000 * microsecond);
 
-    return 0;
+    return 0; // = success
 }
 
 #ifdef SERIAL_READ

@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#define SUPPORT_POLHEMV2
 #include "haptikfabrikenapi.h" // Kinematics stuff
 
 #include <thread>
@@ -15,9 +16,174 @@
 
 //#define OVERDRIVE_EXPERIMENT
 //#define LISTENER_EXAMPLE
-#define SIMPLE_EXAMPE
+//#define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
 //#define WEBSERV_TEST
+#define KINEMATICS_TEST
+
+#ifdef KINEMATICS_TEST
+
+
+constexpr int step = 50;
+constexpr int emin[] = {-11000-step,2800+step};
+constexpr int emax[] = {600-step,19400+step};
+constexpr int len[] = {(emax[0]-emin[0])/step, (emax[1]-emin[1])/step};
+constexpr int lentot = len[0]*len[1];
+float precompGravcompInterpolate(int b, int c, const short* table){
+  if(b<emin[0]+step) return 0;
+  if(c<emin[1]+step) return 0;
+  if(b>emax[0]-step) return 0;
+  if(c>emax[1]-step) return 0;
+  // Bilinear interpolation
+  int bottom_left  = ((c-emin[1])/step)*len[0]+((b-emin[0])/step);
+  int bottom_right = ((c-emin[1])/step)*len[0]+((b-emin[0])/step)+1;
+  int top_left     = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step);
+  int top_right    = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step)+1;
+  float top    = table[top_left]*(1-float(b%step)/step) + table[top_right]*(float(b%step)/step);
+  float bottom = table[bottom_left]*(1-float(b%step)/step) + table[bottom_right]*(float(b%step)/step);
+  return top*(1-float(c%step)/step) + bottom*(float(c%step)/step);
+}
+
+
+int main()
+{
+    using namespace haptikfabriken;
+    using namespace std;
+    using namespace chrono;
+
+    /*
+
+    double t[] = {0.3l,0.4l,0.5l};
+    fsVec2d r[4];
+    high_resolution_clock::time_point t1, t2;
+
+    t1 = high_resolution_clock::now();
+    for(int i=0;i<1000000;++i){
+        polhemGravcompkinematics(t[1],t[2],r);
+    }
+    t2 = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    cout << "Pos: " << r[0].m_x << " " << r[1].m_y << " " << r[2].m_y << " Slow elapsed: " <<  1000*time_span.count() << " ms\n";
+
+
+    t1 = high_resolution_clock::now();
+    fsVec2d q[4];
+    for(int i=0;i<1000000;++i){
+        polhemGravcompkinematicsFast(t[1],t[2],q);
+    }
+    t2 = high_resolution_clock::now();
+    time_span = duration_cast<duration<double>>(t2 - t1);
+    cout << "Pos: " << r[0].m_x << " " << r[1].m_y << " " << r[2].m_y << " Fast elapsed: " <<  1000*time_span.count() << " ms\n";
+*/
+
+
+    Kinematics kinematics(Kinematics::configuration::polhem_v3());
+    int e[] = {0,0,0};
+    fsVec3d f = fsVec3d(0,0,0);
+
+
+
+
+    //e[1]=699;e[2]=7072;
+    //fsVec3d amps = kinematics.computeMotorAmps(f,e);
+    //std::cout << "--> " << e[1] << "," << e[2] << " " << amps.m_y << " " << amps.m_z << "\n";
+
+    short ma1[lentot];
+    short ma2[lentot];
+
+    int i=0;
+    for(e[2]=emin[1];e[2]<emax[1];e[2]+=step){
+        //std::cout << "e2: " << e[2] << " i: " << i <<"\n";
+        for(e[1]=emin[0];e[1]<emax[0];e[1]+=step){
+
+
+            fsVec3d amps = kinematics.computeMotorAmps(f,e);
+
+            ma1[i] = short(1000*amps.m_y);
+            ma2[i] = short(1000*amps.m_z);
+
+            /*
+            if(e[1]==-4400 && e[2]==4000){
+                short ma[] = {short(1000*amps.m_y),short(1000*amps.m_z)};
+                //std::cout << e[1] << "," << e[2] << " " << i << " " << ma[0] << " " << ma[1] << "\n";
+            }*/
+
+            i++;
+        }
+    }
+    //int ii = ((4000-emin[1])/step)*len[0]+((-4400-emin[0])/step);
+    //std::cout << ii << " " << ma1[ii] << " " << ma2[ii] << "\n";
+
+    if(true){
+        std::cout << "#ifndef PRECOMP_GRAVCOMP_H\n"
+                  << "#define PRECOMP_GRAVCOMP_H\n";
+
+
+
+        const char* code = R"#(
+  if(b<emin[0]+step) return 0;
+  if(c<emin[1]+step) return 0;
+  if(b>emax[0]-step) return 0;
+  if(c>emax[1]-step) return 0;
+  // Bilinear interpolation
+  int bottom_left  = ((c-emin[1])/step)*len[0]+((b-emin[0])/step);
+  int bottom_right = ((c-emin[1])/step)*len[0]+((b-emin[0])/step)+1;
+  int top_left     = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step);
+  int top_right    = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step)+1;
+  float top    = table[top_left]*(1-float(b%step)/step) + table[top_right]*(float(b%step)/step);
+  float bottom = table[bottom_left]*(1-float(b%step)/step) + table[bottom_right]*(float(b%step)/step);
+  return top*(1-float(c%step)/step) + bottom*(float(c%step)/step);
+})#";
+
+        std::cout << "float precompGravcompInterpolate(int b, int c, const short* table){\n"
+        << "constexpr int step = " << step << ";\n"
+        << "constexpr int emin[] = {" << emin[0] << ", " << emin[1] <<"}\n"
+        << "constexpr int emax[] = {" << emax[0] << ", " << emax[1] <<"}\n"
+        << "constexpr int len[] = {(emax[0]-emin[0])/step, (emax[1]-emin[1])/step}; ";
+        std::cout << "// " << len[0] << "x" << len[1] << "=" << lentot << "\n";
+        std::cout << code << "\n\n";
+
+
+
+        std::cout << "constexpr short ma1[]={";
+        for(int iii=0;iii<lentot;++iii){
+            if(iii%20==0) std::cout << "\n";
+            std::cout << ma1[iii] << ",";
+        }
+        std::cout << "0};\n\n\n\nconstexpr short ma2[]={";
+        for(int iii=0;iii<lentot;++iii){
+            if(iii%20==0) std::cout << "\n";
+            std::cout << ma2[iii] << ",";
+        }
+        std::cout << "0};\n#endif\n";
+    }
+/*
+int ee1[] = {-4242, -4243, -4244,-4245,-4246};
+int ee2[] = {4122, 4122, 4122, 4122,4122};
+
+for(int i=0;i<5;++i){
+    e[1]=ee1[i];
+    e[2]=ee2[i];
+    fsVec3d amps = kinematics.computeMotorAmps(f,e);
+    double ma[] = {(1000*amps.m_y),(1000*amps.m_z)};
+    std::cout << ma[0] << " " << ma[1] << "\n";
+    std::cout << precompGravcompInterpolate(e[1],e[2],ma1) << " ";
+    std::cout << precompGravcompInterpolate(e[1],e[2],ma2) << "\n\n";
+}*/
+
+
+
+
+    //e[1]=698; e[2]=7072;
+    //int ii = ((e[2]-emin[1])/step)*len[0]+((e[1]-emin[0])/step);
+    //std::cout << "ma: " << ma1[ii] << " " << ma2[ii] << "\n";
+
+
+    return 0;
+
+
+}
+#endif
 
 #ifdef WEBSERV_TEST
 #include "webserv.h"
