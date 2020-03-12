@@ -7,16 +7,8 @@
 #include <cmath>
 #include <iomanip>
 
-constexpr long double pi{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647L};
-constexpr double pi_d{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647};
-
-
 #ifdef SUPPORT_POLHEMV2
-#ifdef UNIX
-#include "polhem.h"
-#else
-#include "../../fs_polhem/haptikfabrikenapi-polhem/polhem.h"
-#endif
+#include "src/polhem.h"
 #endif
 
 
@@ -30,6 +22,8 @@ constexpr double pi_d{3.14159265358979323846264338327950288419716939937510582097
 //}
 #endif
 
+constexpr double pi_d{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647};
+constexpr long double pi{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647L};
 
 namespace haptikfabriken {
 
@@ -94,7 +88,6 @@ struct pose {
 
 pose calculate_pose(const Kinematics::configuration& c, const int* encoder_values) {
     pose p;
-
     double motorAngle[] = { (2.0*pi_d*double(encoder_values[0])/c.cpr_encoder_a),
                             (2.0*pi_d*double(encoder_values[1])/c.cpr_encoder_b),
                             (2.0*pi_d*double(encoder_values[2])/c.cpr_encoder_c)};
@@ -416,6 +409,10 @@ fsVec3d Kinematics::computeMotorAmps(fsVec3d force, const int *encoderValues)
     if(m_config.variant == 3){ // Polhem v.2
 #ifdef SUPPORT_POLHEMV2
         t = polhemComputeMotorAmps(force, tA, tB, tC, debugJacobians, debugTorques);
+#else
+        std::cout << "Haptikfabriken API compiled without Polhem haptic device support. "
+                  << "Edit haptikfabrikenapi.pro and run qmake to enable."
+                  << "Contact Jonas Forsslund (jonas@forsslundsystems.com) for latest verison of polhem.h\n";
 #endif
     } else {
         // All other devices uses same kinematic structure

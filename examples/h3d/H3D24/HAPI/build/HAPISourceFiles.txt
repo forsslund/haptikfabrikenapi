@@ -1,0 +1,142 @@
+set( HAPI_HEADERS "${HAPI_SOURCE_DIR}/../include/HAPI/AnyHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/ClutchedHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/CollisionObjects.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/DepthMapSurface.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/DeviceLog.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/EntactHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/FalconHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/FeedbackBufferCollector.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/ForceDimensionHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/FrictionSurface.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/GodObjectRenderer.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIForceEffect.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIFrictionSurface.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIFunctionObject.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIGLShape.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIHapticObject.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIHapticShape.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIHapticsRenderer.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIProxyBasedRenderer.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIShapeRenderOptions.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPISurfaceObject.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPITypes.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HAPIVariableDepthSurface.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticForceField.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticLineSet.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticMasterDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticPointSet.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticPositionFunctionEffect.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticPrimitive.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticPrimitiveSet.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticPrimitiveTree.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticRotationalSpring.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticShapeConstraint.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticSpring.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTexturesSurface.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTimeFunctionEffect.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTriangleSet.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticTriangleTree.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HapticViscosity.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HaptikfabrikenHapticsDevice.h"				  
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HaptikHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HaptionHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/HLThread.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/ImageInterfaceObject.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/IntersectionInfo.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/MLHIHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/NiFalconHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/ParsedFunction.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/PhantomHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/PlaneConstraint.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/PlaybackHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/QuanserHapticsDevice.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/RuspiniRenderer.h"
+                  "${HAPI_SOURCE_DIR}/../include/HAPI/SimballHapticsDevice.h" )
+
+if( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/H3DAPI/HAPI )
+  set( HAPI_HEADERS ${HAPI_HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/H3DAPI/HAPI/include/HAPI/HAPI.h" )
+else()
+  set( HAPI_HEADERS ${HAPI_HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/include/HAPI/HAPI.h" )
+endif()
+
+set( HAPI_SOURCE_FILES "AnyHapticsDevice.cpp"
+               "ClutchedHapticsDevice.cpp"
+               "CollisionObjects.cpp"
+               "DepthMapSurface.cpp"
+               "DeviceLog.cpp"
+               "EntactHapticsDevice.cpp"
+               "FalconHapticsDevice.cpp"
+               "FeedbackBufferCollector.cpp"
+               "ForceDimensionHapticsDevice.cpp"
+               "FrictionSurface.cpp"
+               "GodObjectRenderer.cpp"
+               "HAPI.cpp"
+               "HAPIForceEffect.cpp"
+               "HAPIFrictionSurface.cpp"
+               "HAPIHapticsDevice.cpp"
+               "HAPIHapticShape.cpp"
+               "HAPIHapticsRenderer.cpp"
+               "HAPISurfaceObject.cpp"
+               "HAPIVariableDepthSurface.cpp"
+               "HapticForceField.cpp"
+               "HapticLineSet.cpp"
+               "HapticMasterDevice.cpp"
+               "HapticPointSet.cpp"
+               "HapticPositionFunctionEffect.cpp"
+               "HapticPrimitive.cpp"
+               "HapticPrimitiveSet.cpp"
+               "HapticPrimitiveTree.cpp"
+               "HapticRotationalSpring.cpp"
+               "HapticShapeConstraint.cpp"
+               "HapticSpring.cpp"
+               "HapticTexturesSurface.cpp"
+               "HapticTimeFunctionEffect.cpp"
+               "HapticTriangleSet.cpp"
+               "HapticTriangleTree.cpp"
+               "HapticViscosity.cpp"
+               "HaptikfabrikenHapticsDevice.cpp"			   
+               "HaptikHapticsDevice.cpp"
+               "HaptionHapticsDevice.cpp"
+               "HLThread.cpp"
+               "ImageInterfaceObject.cpp"
+               "MLHIHapticsDevice.cpp"
+               "NiFalconHapticsDevice.cpp"
+               "ParsedFunction.cpp"
+               "PhantomHapticsDevice.cpp"
+               "PlaneConstraint.cpp"
+               "PlaybackHapticsDevice.cpp"
+               "QuanserHapticsDevice.cpp"
+               "RuspiniRenderer.cpp"
+               "SimballHapticsDevice.cpp" )
+
+if( OpenHaptics_FOUND OR GENERATE_H3D_PACKAGE_PROJECT )
+  set( OH_HEADERS "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/include/HAPI/Config.h"
+                  "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/include/HAPI/HLCustomObject.h"
+                  "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/include/HAPI/HLDepthBufferShape.h"
+                  "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/include/HAPI/HLFeedbackShape.h"
+                  "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/include/HAPI/OpenHapticsRenderer.h" )
+
+  set( OH_SRCS "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/src/HLCustomObject.cpp"
+               "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/src/HLDepthBufferShape.cpp"
+               "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/src/HLFeedbackShape.cpp"
+               "${HAPI_SOURCE_DIR}/../OpenHapticsRenderer/src/OpenHapticsRenderer.cpp" )
+endif()
+
+if( Chai3D_FOUND OR GENERATE_H3D_PACKAGE_PROJECT )
+  set( CHAI_HEADERS "${HAPI_SOURCE_DIR}/../Chai3DRenderer/include/HAPI/Chai3DRenderer.h"
+                    "${HAPI_SOURCE_DIR}/../Chai3DRenderer/include/HAPI/Chai3DRendererConfig.h" )
+
+  set( CHAI_SRCS "${HAPI_SOURCE_DIR}/../Chai3DRenderer/src/Chai3DRenderer.cpp" )
+endif()
+
+
+
+# The sources for a normal build is all files used for unity build and
+# the rest of the files.
+set( HAPI_SRCS "" )
+foreach( filename ${HAPI_SOURCE_FILES} )
+  set( HAPI_SRCS ${HAPI_SRCS} "${HAPI_SOURCE_DIR}/../src/${filename}" )
+endforeach()
+
+

@@ -16,6 +16,10 @@ TEMPLATE = lib
 # For Windows we recommend instead static build for now:
 CONFIG += staticlib
 
+# Uncomment if you have a Polhem haptic device. Contact Jonas Forsslund
+# (jonas@forsslundsystems.com) for latest verison of polhem.h
+#CONFIG += polhemv2
+
 # Alternatively: to make a dynamic library in windows, we have to follow
 # these guidlines in order to generate a proper .lib file
 # https://doc.qt.io/qt-5/sharedlibrary.html
@@ -50,7 +54,7 @@ INSTALLS += header_files
 CONFIG += use_usb_hid
 CONFIG += use_webserv
 #CONFIG += use_sensoray
-CONFIG += polhemv2
+
 
 polhemv2 {
     HEADERS += src/polhem.h
