@@ -11,7 +11,12 @@
 #include <thread>
 #include <chrono>
 
+//#define BOOST_SERIAL
+
+
+#ifndef BOOST_SERIAL
 #include "pjrcserialcomm.h"
+#endif
 
 #ifndef UNIX
 void usleep(int us)
@@ -119,10 +124,11 @@ void FsUSBHapticDeviceThread::thread()
     port = new serial_port(io, serialport_name); // Set in constructor, but can be found with a static call in haptikfabrikenapi
     //port = new serial_port(io, "COM9");
     char outstr[64];
-#endif
 
+#else
     scom = new PJRCSerialComm();
     scom->open(serialport_name);
+#endif
     m_wakeup_thread = new boost::thread(boost::bind(&FsUSBHapticDeviceThread::wakeup_thread, this));
 
 #ifdef UNIX_NATIVE_SERIAL
@@ -222,15 +228,16 @@ void FsUSBHapticDeviceThread::thread()
         { // not happening with boost sync read
             pc_to_hid = {};
             pc_to_hid.toChars(outstr);
-            this_thread::sleep_for(100 * );
+            this_thread::sleep_for(100 * microsecond);
             std::cout << "initial\n";
             continue;
         }
         //hid_to_pc.fromChars(read_buf);
         std::string sbs((std::istreambuf_iterator<char>(&sb)), std::istreambuf_iterator<char>());
         hid_to_pc.fromChars(sbs.c_str());
-#endif
+#else
         scom->receive(hid_to_pc);
+#endif
 
 
         got_message = true; // Inform the "wake up" thread
@@ -419,8 +426,9 @@ void FsUSBHapticDeviceThread::thread()
 #ifdef BOOST_SERIAL
         int len = pc_to_hid.toChars(outstr);
         write(*port, buffer(outstr, len));
-#endif
+#else
         scom->send(pc_to_hid);
+#endif
 
 #else
         // **************** SEND ***************
@@ -641,8 +649,9 @@ void FsUSBHapticDeviceThread::wakeup_thread()
             std::cout << "Init writing\n";
 #ifdef BOOST_SERIAL
             write(*port, boost::asio::buffer("0 0 0 0 0 0 0\n"));
-#endif
+#else
             scom->sendWakeupMessage();
+#endif
         }
         got_message = false;
     }

@@ -15,9 +15,10 @@
 
 //#define OVERDRIVE_EXPERIMENT
 //#define LISTENER_EXAMPLE
-#define SIMPLE_EXAMPE
+//#define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
 //#define WEBSERV_TEST
+#define MAXFORCE_TEST
 
 #ifdef WEBSERV_TEST
 #include "webserv.h"
@@ -193,6 +194,206 @@ int main()
     return 0;
 }
 
+#endif
+
+#ifdef MAXFORCE_TEST
+#include <math.h>
+double length(const fsVec3d& v){ return std::sqrt(v.m_x*v.m_x + v.m_y*v.m_y + v.m_z*v.m_z); }
+int main()
+{
+    cout << "Hello World!" << endl;
+
+#ifdef PURE_SERIAL
+    unsigned int numdevices = HaptikfabrikenInterface::findUSBSerialDevices();
+    cout << "Found " << numdevices << " devices\n";
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
+    if (!numdevices)
+        return 0; // no devices found
+#endif
+
+    HaptikfabrikenInterface hi(Kinematics::configuration::polhem_v3(),
+                               HaptikfabrikenInterface::USB);
+    hi.open();
+
+    std::this_thread::sleep_for(hundred_milliseconds);
+    std::this_thread::sleep_for(hundred_milliseconds);
+
+    //hi.calibrate(); // for woodenhaptics
+
+    int active_phase = 1;
+
+    fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
+
+
+    Kinematics kinematics(Kinematics::configuration::polhem_v3());
+
+    fsVec3d a = kinematics.computePosition(0,-4591,11028);
+    fsVec3d b = kinematics.computePosition(-1,-4591,11028);
+    fsVec3d c = b-a;
+    std::cout << "a: " << toString(a*1000)<< "\n";
+    std::cout << "b: " << toString(b*1000)<< "\n";
+    std::cout << "c: " << toString(c*1000)<< " " << length(c)*1000 << "\n";
+
+
+
+
+
+
+    return 0;
+
+    int printcount=0;
+    int hcount=0;
+    high_resolution_clock::time_point t1, t2;
+    t1 = high_resolution_clock::now();
+
+    while (active_phase)
+    {
+        if (_kbhit())
+        {
+            char cc;
+            std::cin >> cc;
+            //active_phase++;
+            active_phase=0;
+            //if(active_phase==2) active_phase=0;
+        }
+
+        //continue;
+
+        fsVec3d v = hi.getPos(true);
+        hcount++;
+        t2 = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+        double elapsed = time_span.count();
+        //if(elapsed > 1){std::cout << "Hrate: " << hcount << "\n"; hcount=0; t1=t2; }
+
+
+        int e[6];
+        hi.getEnc(e);
+        fsVec3d thetas = hi.getBodyAngles() * (180 / 3.141592);
+
+        double dtheta = thetas.m_x - thetas_start.m_x;
+
+        // Alternatively, set actual current in Amperes to respective motor (a,b,c)
+        //fsVec3d c(0.000, 0, 0);
+        //hi.setCurrent(c);
+
+
+
+        // For example haptic rendering of a surrounding box
+#define RENDER_BOX
+#ifdef RENDER_BOX
+        //v.m_x +=  0.01; // positive in
+        //v.m_z +=  0.005;  // positive down
+
+        // Box
+        fsVec3d f;
+        fsVec3d boxpos = fsVec3d(0.0,0.0,0);
+        double k=2500;
+        double bx=0.025;//0.05; // 10cm "z"
+        double by=0.025;//0.10; // 20cm "x"
+        double bz=0.025;//0.06; // 12cm "y"
+        double x=v.x()-boxpos.x();
+        double y=v.y()-boxpos.y();
+        double z=v.z()-boxpos.z();
+        double fx,fy,fz;
+        fx=0;fy=0;fz=0;
+
+        if(x >  bx) fx = -k*(x-bx);
+        if(x < -bx) fx = -k*(x+bx);
+        if(y >  by) fy = -k*(y-by);
+        if(y < -by) fy = -k*(y+by);
+        if(z >  bz) fz = -k*(z-bz);
+        if(z < -bz) fz = -k*(z+bz);
+
+        f = fsVec3d(fx,fy,fz);
+
+
+        // Circle segment workspace
+        /*
+        double radi = sqrt(v.x()*v.x() + v.z()*v.z());
+        double circler=0.075;
+        if(radi < circler){
+            f.zero();
+        } else {
+            f = -1500 * (radi-circler) * fsVec3d(v.x(),0,v.z())*(1/radi);
+        }
+        */
+
+        // Spring forcce
+        //f = -600*v;
+        f = -200*v;
+
+
+#endif
+
+
+
+        hi.setForce(f);
+        //continue;
+
+        if(printcount++%100==0){
+        double fmax[] = {45,45,45};
+        for(int i=0;i<3;++i){
+            fsVec3d a(5,5,5);
+            while(std::abs(a.m_x)>3.17 || std::abs(a.m_y)>1.74 || std::abs(a.m_z)>1.74){
+            //while(std::abs(a.m_x)>6 || std::abs(a.m_y)>6 || std::abs(a.m_z)>6){
+                fmax[i]-=0.05;
+                a = kinematics.computeMotorAmps(fsVec3d(i==0?fmax[0]:0,
+                                               i==1?fmax[1]:0,
+                                               i==2?fmax[2]:0),e);
+            }
+        }
+
+        int ma[3];
+        hi.getLatestCommandedMilliamps(ma);
+        int e[6];
+        hi.getEnc(e);
+
+        std::cout << "dtheta; " << dtheta << " P: " << v.m_x*1000 << " " << v.m_y*1000 << " " << v.m_z*1000
+                  << " fmax: " << fmax[0] << " " << fmax[1] << " " << fmax[2]
+                  << " enc: " << e[0] << " " << e[1] << " " << e[2]
+                  //<< "  a: " << toString(a)
+                  << "\n";
+
+        //std::cout << e[2] << '\n';
+        }
+
+        //std::this_thread::sleep_for(1 * one_millisecond);
+    }
+
+/*
+//    hi.getPos(true);
+//    hi.getPos(true);
+    int ma[3];
+
+    fsVec3d force(0,0,0);
+
+    for(int i=0;i<31;++i){
+        if (_kbhit()) break;
+
+        if(abs(force.m_z)<20)
+            force.m_z-=1;
+        hi.setForce(force);
+        hi.getLatestCommandedMilliamps(ma);
+
+        std::cout
+                  << i << " Force " << toString(force) << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
+                  << "\n";
+
+        std::this_thread::sleep_for(100 * one_millisecond);
+    }
+
+    force.zero();
+    hi.setForce(force);
+    std::cout
+              << "Force " << toString(force) << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
+              << "\n";
+    std::this_thread::sleep_for(3000 * one_millisecond);
+    */
+
+    cout << "Goodbye World!" << endl;
+    hi.close();
+}
 #endif
 
 #ifdef SIMPLE_EXAMPE
