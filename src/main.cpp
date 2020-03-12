@@ -19,31 +19,34 @@
 //#define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
 //#define WEBSERV_TEST
-#define KINEMATICS_TEST
+//#define KINEMATICS_TEST
+#define MAXFORCE_TEST
 
 #ifdef KINEMATICS_TEST
-
-
 constexpr int step = 50;
-constexpr int emin[] = {-11000-step,2800+step};
-constexpr int emax[] = {600-step,19400+step};
-constexpr int len[] = {(emax[0]-emin[0])/step, (emax[1]-emin[1])/step};
-constexpr int lentot = len[0]*len[1];
-float precompGravcompInterpolate(int b, int c, const short* table){
-  if(b<emin[0]+step) return 0;
-  if(c<emin[1]+step) return 0;
-  if(b>emax[0]-step) return 0;
-  if(c>emax[1]-step) return 0;
-  // Bilinear interpolation
-  int bottom_left  = ((c-emin[1])/step)*len[0]+((b-emin[0])/step);
-  int bottom_right = ((c-emin[1])/step)*len[0]+((b-emin[0])/step)+1;
-  int top_left     = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step);
-  int top_right    = ((c-emin[1])/step +1)*len[0]+((b-emin[0])/step)+1;
-  float top    = table[top_left]*(1-float(b%step)/step) + table[top_right]*(float(b%step)/step);
-  float bottom = table[bottom_left]*(1-float(b%step)/step) + table[bottom_right]*(float(b%step)/step);
-  return top*(1-float(c%step)/step) + bottom*(float(c%step)/step);
+constexpr int emin[] = {-11000 - step, 2800 + step};
+constexpr int emax[] = {600 - step, 19400 + step};
+constexpr int len[] = {(emax[0] - emin[0]) / step, (emax[1] - emin[1]) / step};
+constexpr int lentot = len[0] * len[1];
+float precompGravcompInterpolate(int b, int c, const short *table)
+{
+    if (b < emin[0] + step)
+        return 0;
+    if (c < emin[1] + step)
+        return 0;
+    if (b > emax[0] - step)
+        return 0;
+    if (c > emax[1] - step)
+        return 0;
+    // Bilinear interpolation
+    int bottom_left = ((c - emin[1]) / step) * len[0] + ((b - emin[0]) / step);
+    int bottom_right = ((c - emin[1]) / step) * len[0] + ((b - emin[0]) / step) + 1;
+    int top_left = ((c - emin[1]) / step + 1) * len[0] + ((b - emin[0]) / step);
+    int top_right = ((c - emin[1]) / step + 1) * len[0] + ((b - emin[0]) / step) + 1;
+    float top = table[top_left] * (1 - float(b % step) / step) + table[top_right] * (float(b % step) / step);
+    float bottom = table[bottom_left] * (1 - float(b % step) / step) + table[bottom_right] * (float(b % step) / step);
+    return top * (1 - float(c % step) / step) + bottom * (float(c % step) / step);
 }
-
 
 int main()
 {
@@ -76,13 +79,9 @@ int main()
     cout << "Pos: " << r[0].m_x << " " << r[1].m_y << " " << r[2].m_y << " Fast elapsed: " <<  1000*time_span.count() << " ms\n";
 */
 
-
     Kinematics kinematics(Kinematics::configuration::polhem_v3());
-    int e[] = {0,0,0};
-    fsVec3d f = fsVec3d(0,0,0);
-
-
-
+    int e[] = {0, 0, 0};
+    fsVec3d f = fsVec3d(0, 0, 0);
 
     //e[1]=699;e[2]=7072;
     //fsVec3d amps = kinematics.computeMotorAmps(f,e);
@@ -91,16 +90,17 @@ int main()
     short ma1[lentot];
     short ma2[lentot];
 
-    int i=0;
-    for(e[2]=emin[1];e[2]<emax[1];e[2]+=step){
+    int i = 0;
+    for (e[2] = emin[1]; e[2] < emax[1]; e[2] += step)
+    {
         //std::cout << "e2: " << e[2] << " i: " << i <<"\n";
-        for(e[1]=emin[0];e[1]<emax[0];e[1]+=step){
+        for (e[1] = emin[0]; e[1] < emax[0]; e[1] += step)
+        {
 
+            fsVec3d amps = kinematics.computeMotorAmps(f, e);
 
-            fsVec3d amps = kinematics.computeMotorAmps(f,e);
-
-            ma1[i] = short(1000*amps.m_y);
-            ma2[i] = short(1000*amps.m_z);
+            ma1[i] = short(1000 * amps.m_y);
+            ma2[i] = short(1000 * amps.m_z);
 
             /*
             if(e[1]==-4400 && e[2]==4000){
@@ -114,13 +114,12 @@ int main()
     //int ii = ((4000-emin[1])/step)*len[0]+((-4400-emin[0])/step);
     //std::cout << ii << " " << ma1[ii] << " " << ma2[ii] << "\n";
 
-    if(true){
+    if (true)
+    {
         std::cout << "#ifndef PRECOMP_GRAVCOMP_H\n"
                   << "#define PRECOMP_GRAVCOMP_H\n";
 
-
-
-        const char* code = R"#(
+        const char *code = R"#(
   if(b<emin[0]+step) return 0;
   if(c<emin[1]+step) return 0;
   if(b>emax[0]-step) return 0;
@@ -136,28 +135,30 @@ int main()
 })#";
 
         std::cout << "float precompGravcompInterpolate(int b, int c, const short* table){\n"
-        << "constexpr int step = " << step << ";\n"
-        << "constexpr int emin[] = {" << emin[0] << ", " << emin[1] <<"}\n"
-        << "constexpr int emax[] = {" << emax[0] << ", " << emax[1] <<"}\n"
-        << "constexpr int len[] = {(emax[0]-emin[0])/step, (emax[1]-emin[1])/step}; ";
+                  << "constexpr int step = " << step << ";\n"
+                  << "constexpr int emin[] = {" << emin[0] << ", " << emin[1] << "}\n"
+                  << "constexpr int emax[] = {" << emax[0] << ", " << emax[1] << "}\n"
+                  << "constexpr int len[] = {(emax[0]-emin[0])/step, (emax[1]-emin[1])/step}; ";
         std::cout << "// " << len[0] << "x" << len[1] << "=" << lentot << "\n";
         std::cout << code << "\n\n";
 
-
-
         std::cout << "constexpr short ma1[]={";
-        for(int iii=0;iii<lentot;++iii){
-            if(iii%20==0) std::cout << "\n";
+        for (int iii = 0; iii < lentot; ++iii)
+        {
+            if (iii % 20 == 0)
+                std::cout << "\n";
             std::cout << ma1[iii] << ",";
         }
         std::cout << "0};\n\n\n\nconstexpr short ma2[]={";
-        for(int iii=0;iii<lentot;++iii){
-            if(iii%20==0) std::cout << "\n";
+        for (int iii = 0; iii < lentot; ++iii)
+        {
+            if (iii % 20 == 0)
+                std::cout << "\n";
             std::cout << ma2[iii] << ",";
         }
         std::cout << "0};\n#endif\n";
     }
-/*
+    /*
 int ee1[] = {-4242, -4243, -4244,-4245,-4246};
 int ee2[] = {4122, 4122, 4122, 4122,4122};
 
@@ -171,17 +172,11 @@ for(int i=0;i<5;++i){
     std::cout << precompGravcompInterpolate(e[1],e[2],ma2) << "\n\n";
 }*/
 
-
-
-
     //e[1]=698; e[2]=7072;
     //int ii = ((e[2]-emin[1])/step)*len[0]+((e[1]-emin[0])/step);
     //std::cout << "ma: " << ma1[ii] << " " << ma2[ii] << "\n";
 
-
     return 0;
-
-
 }
 #endif
 
@@ -361,6 +356,208 @@ int main()
 
 #endif
 
+#ifdef MAXFORCE_TEST
+#include <math.h>
+double length(const fsVec3d &v)
+{
+    return std::sqrt(v.m_x * v.m_x + v.m_y * v.m_y + v.m_z * v.m_z);
+}
+int main()
+{
+    cout << "Hello World!" << endl;
+
+#ifdef PURE_SERIAL
+    unsigned int numdevices = HaptikfabrikenInterface::findUSBSerialDevices();
+    cout << "Found " << numdevices << " devices\n";
+    cout << "Serialport name: " << HaptikfabrikenInterface::serialport_name << "\n";
+    if (!numdevices)
+        return 0; // no devices found
+#endif
+
+    HaptikfabrikenInterface hi(Kinematics::configuration::polhem_v3(),
+                               HaptikfabrikenInterface::USB);
+    hi.open();
+
+    std::this_thread::sleep_for(hundred_milliseconds);
+    std::this_thread::sleep_for(hundred_milliseconds);
+
+    //hi.calibrate(); // for woodenhaptics
+
+    int active_phase = 1;
+
+    fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
+
+    Kinematics kinematics(Kinematics::configuration::polhem_v3());
+
+    fsVec3d a = kinematics.computePosition(0, -4591, 11028);
+    fsVec3d b = kinematics.computePosition(-1, -4591, 11028);
+    fsVec3d c = b - a;
+    std::cout << "a: " << toString(a * 1000) << "\n";
+    std::cout << "b: " << toString(b * 1000) << "\n";
+    std::cout << "c: " << toString(c * 1000) << " " << length(c) * 1000 << "\n";
+
+    return 0;
+
+    int printcount = 0;
+    int hcount = 0;
+    high_resolution_clock::time_point t1, t2;
+    t1 = high_resolution_clock::now();
+
+    while (active_phase)
+    {
+        if (_kbhit())
+        {
+            char cc;
+            std::cin >> cc;
+            //active_phase++;
+            active_phase = 0;
+            //if(active_phase==2) active_phase=0;
+        }
+
+        //continue;
+
+        fsVec3d v = hi.getPos(true);
+        hcount++;
+        t2 = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+        double elapsed = time_span.count();
+        //if(elapsed > 1){std::cout << "Hrate: " << hcount << "\n"; hcount=0; t1=t2; }
+
+        int e[6];
+        hi.getEnc(e);
+        fsVec3d thetas = hi.getBodyAngles() * (180 / 3.141592);
+
+        double dtheta = thetas.m_x - thetas_start.m_x;
+
+        // Alternatively, set actual current in Amperes to respective motor (a,b,c)
+        //fsVec3d c(0.000, 0, 0);
+        //hi.setCurrent(c);
+
+        // For example haptic rendering of a surrounding box
+#define RENDER_BOX
+#ifdef RENDER_BOX
+        //v.m_x +=  0.01; // positive in
+        //v.m_z +=  0.005;  // positive down
+
+        // Box
+        fsVec3d f;
+        fsVec3d boxpos = fsVec3d(0.0, 0.0, 0);
+        double k = 2500;
+        double bx = 0.025; //0.05; // 10cm "z"
+        double by = 0.025; //0.10; // 20cm "x"
+        double bz = 0.025; //0.06; // 12cm "y"
+        double x = v.x() - boxpos.x();
+        double y = v.y() - boxpos.y();
+        double z = v.z() - boxpos.z();
+        double fx, fy, fz;
+        fx = 0;
+        fy = 0;
+        fz = 0;
+
+        if (x > bx)
+            fx = -k * (x - bx);
+        if (x < -bx)
+            fx = -k * (x + bx);
+        if (y > by)
+            fy = -k * (y - by);
+        if (y < -by)
+            fy = -k * (y + by);
+        if (z > bz)
+            fz = -k * (z - bz);
+        if (z < -bz)
+            fz = -k * (z + bz);
+
+        f = fsVec3d(fx, fy, fz);
+
+        // Circle segment workspace
+        /*
+        double radi = sqrt(v.x()*v.x() + v.z()*v.z());
+        double circler=0.075;
+        if(radi < circler){
+            f.zero();
+        } else {
+            f = -1500 * (radi-circler) * fsVec3d(v.x(),0,v.z())*(1/radi);
+        }
+        */
+
+        // Spring forcce
+        //f = -600*v;
+        f = -200 * v;
+
+#endif
+
+        hi.setForce(f);
+        //continue;
+
+        if (printcount++ % 100 == 0)
+        {
+            double fmax[] = {45, 45, 45};
+            for (int i = 0; i < 3; ++i)
+            {
+                fsVec3d a(5, 5, 5);
+                while (std::abs(a.m_x) > 3.17 || std::abs(a.m_y) > 1.74 || std::abs(a.m_z) > 1.74)
+                {
+                    //while(std::abs(a.m_x)>6 || std::abs(a.m_y)>6 || std::abs(a.m_z)>6){
+                    fmax[i] -= 0.05;
+                    a = kinematics.computeMotorAmps(fsVec3d(i == 0 ? fmax[0] : 0,
+                                                            i == 1 ? fmax[1] : 0,
+                                                            i == 2 ? fmax[2] : 0),
+                                                    e);
+                }
+            }
+
+            int ma[3];
+            hi.getLatestCommandedMilliamps(ma);
+            int e[6];
+            hi.getEnc(e);
+
+            std::cout << "dtheta; " << dtheta << " P: " << v.m_x * 1000 << " " << v.m_y * 1000 << " " << v.m_z * 1000
+                      << " fmax: " << fmax[0] << " " << fmax[1] << " " << fmax[2]
+                      << " enc: " << e[0] << " " << e[1] << " " << e[2]
+                      //<< "  a: " << toString(a)
+                      << "\n";
+
+            //std::cout << e[2] << '\n';
+        }
+
+        //std::this_thread::sleep_for(1 * one_millisecond);
+    }
+
+    /*
+//    hi.getPos(true);
+//    hi.getPos(true);
+    int ma[3];
+
+    fsVec3d force(0,0,0);
+
+    for(int i=0;i<31;++i){
+        if (_kbhit()) break;
+
+        if(abs(force.m_z)<20)
+            force.m_z-=1;
+        hi.setForce(force);
+        hi.getLatestCommandedMilliamps(ma);
+
+        std::cout
+                  << i << " Force " << toString(force) << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
+                  << "\n";
+
+        std::this_thread::sleep_for(100 * one_millisecond);
+    }
+
+    force.zero();
+    hi.setForce(force);
+    std::cout
+              << "Force " << toString(force) << " ma: " << ma[0] << " " << ma[1] << " " << ma[2]
+              << "\n";
+    std::this_thread::sleep_for(3000 * one_millisecond);
+    */
+
+    cout << "Goodbye World!" << endl;
+    hi.close();
+}
+#endif
+
 #ifdef SIMPLE_EXAMPE
 int main()
 {
@@ -387,10 +584,6 @@ int main()
 
     fsVec3d thetas_start = hi.getBodyAngles() * (180 / 3.141592);
 
-
-
-
-
     bool go = 0;
     while (active_phase)
     {
@@ -415,7 +608,7 @@ int main()
         // Alternatively, set actual current in Amperes to respective motor (a,b,c)
         //fsVec3d c(0.000, 0, 0);
         //hi.setCurrent(c);
-        hi.setForce(fsVec3d(0,0,0));
+        hi.setForce(fsVec3d(0, 0, 0));
 
         continue;
 
@@ -432,13 +625,12 @@ int main()
         std::this_thread::sleep_for(100 * one_millisecond);
     }
 
-
     high_resolution_clock::time_point t1, t2;
     t1 = high_resolution_clock::now();
-    for(int i=0;i<1000;i++){
+    for (int i = 0; i < 1000; i++)
+    {
 
         fsVec3d v = hi.getPos(true);
-
     }
     t2 = high_resolution_clock::now();
 
@@ -447,8 +639,7 @@ int main()
     duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
     double elapsed = time_span.count();
 
-    cout << "elased: " <<  elapsed << " ms";
-
+    cout << "elased: " << elapsed << " ms";
 
     cout << "Goodbye World!" << endl;
     hi.close();

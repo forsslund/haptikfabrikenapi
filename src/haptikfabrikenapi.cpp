@@ -277,12 +277,13 @@ haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getCurrentForce
 void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f)
 {
     // Limit to 5N
+    /*
     double magnitude = sqrt(f.m_x * f.m_x + f.m_y * f.m_y + f.m_z * f.m_z);
     if (magnitude > 5.0)
     {
         fsVec3d dir(f.m_x / magnitude, f.m_y / magnitude, f.m_z / magnitude);
         f = dir * 5.0;
-    }
+    }*/
 
     fsthread->setForce(f);
 }
