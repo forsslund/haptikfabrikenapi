@@ -9,12 +9,14 @@
 #TEMPLATE = app
 #SOURCES += src/main.cpp
 
+HEADERS += src/uhaptikfabriken.h
+
 # ...and comment these lines out:
 TEMPLATE = lib
-#CONFIG += dynamiclib
+CONFIG += dynamiclib
 
 # For Windows we recommend instead static build for now:
-CONFIG += staticlib
+#CONFIG += staticlib
 
 # Uncomment if you have a Polhem haptic device. Contact Jonas Forsslund
 # (jonas@forsslundsystems.com) for latest verison of polhem.h
@@ -39,7 +41,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 TARGET = haptikfabrikenapi
-CONFIG(debug, debug|release):   TARGET = haptikfabrikenapi_d
+#CONFIG(debug, debug|release):   TARGET = haptikfabrikenapi_d
 
 linux: target.path = /usr/local/lib
 win32: target.path = lib/#c:/chai3d/external/haptikfabrikenapi
@@ -51,13 +53,13 @@ INSTALLS += header_files
 
 
 # Choose if you are using USB HID edition (currently only linux) or UDP (default) by commenting this line
-CONFIG += use_usb_hid
-CONFIG += use_webserv
+#CONFIG += use_usb_hid
+#CONFIG += use_webserv
 #CONFIG += use_sensoray
 
 
 polhemv2 {
-    HEADERS += src/polhem.h
+    HEADERS +=
     DEFINES += SUPPORT_POLHEMV2
 }
 
@@ -79,30 +81,27 @@ CONFIG(debug,debug|release): message("Building debug.")
 CONFIG(release,debug|release): message("Building release.")
 
 
-SOURCES +=   src/kinematics.cpp \
-    src/fshapticdevicethread.cpp \
+SOURCES +=   \
+   # src/fshapticdevicethread.cpp \
     src/haptikfabrikenapi.cpp
 
-HEADERS += src/kinematics.h \
-    src/fshapticdevicethread.h \
-    src/haptikfabrikenapi.h \
-    src/json.hpp \ # https://github.com/nlohmann/json/releases v. 3.7.0
-    src/pjrcserialcomm.h
+HEADERS += src/haptikfabrikenapi.h #src/kinematics.h \
+     # src/json.hpp # https://github.com/nlohmann/json/releases v. 3.7.0
 
 
 
 use_usb_hid {
-    SOURCES += src/fsusbhapticdevicethread.cpp \
+    SOURCES += \
                external/hidapi/hid.c
-    HEADERS += src/fsusbhapticdevicethread.h \
+    HEADERS += \
                external/hidapi/hidapi.h
     DEFINES += USE_USB_HID
 }
 
 use_webserv {
     DEFINES += USE_WEBSERV
-    SOURCES += src/webserv.cpp
-    HEADERS += src/webserv.h src/client_http.h src/server_http.h
+    SOURCES +=
+    HEADERS += src/client_http.h
 }
 
 #use_sensoray {

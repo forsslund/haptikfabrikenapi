@@ -1,4 +1,8 @@
 #include "haptikfabrikenapi.h"
+
+#define UHAPTIK
+
+#ifndef UHAPTIK
 #include "fshapticdevicethread.h"
 #ifdef USE_DAQ
 #include "fsdaqhapticdevicethread.h"
@@ -10,7 +14,208 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/thread/thread.hpp>
+#endif
 
+#ifdef UHAPTIK
+#include "uhaptikfabriken.h"
+#endif
+
+#include <thread>
+#include <mutex>
+#include <set>
+
+//typedef uhaptikfabriken::HaptikfabrikenInterface FsHapticDeviceThread;
+class haptikfabriken::FsHapticDeviceThread {
+public:
+    uhaptikfabriken::HaptikfabrikenInterface uh;
+
+    FsHapticDeviceThread() {
+        std::cout << "haptikfabrikenapi.cpp FsHapticDeviceThread() constructor!\n";
+        pelle();
+        //std::thread a(&FsHapticDeviceThread::pelle,this);
+        //a.join();
+        m_event_thread = std::thread{&FsHapticDeviceThread::event_thread, this};
+        //m_event_thread.join();
+        std::cout << "after thread created!\n";
+    }
+    ~FsHapticDeviceThread(){
+        std::cout << "Destructor!\n";
+        running=false;
+        m_event_thread.join();
+    }
+
+    void pelle(){
+        std::cout << "Pelle!\n";
+
+    }
+
+    std::set<haptikfabriken::HapticListener*> listeners;
+    std::mutex listener_mutex;
+    std::thread m_event_thread;
+
+    void addEventListener(haptikfabriken::HapticListener* listener){
+        listener_mutex.lock();
+        listeners.insert(listener);
+        listener_mutex.unlock();
+    }
+    void removeEventListener(haptikfabriken::HapticListener* listener){
+        listener_mutex.lock();
+        listeners.erase(listener);
+        listener_mutex.unlock();
+    }
+    void event_thread(){
+
+        std::cout << "in event_thread\n";
+
+        using namespace std::chrono;
+        std::chrono::duration<int, std::micro> microsecond{1};
+        high_resolution_clock::time_point t1,t2;
+
+        t1 = high_resolution_clock::now();
+
+        high_resolution_clock::time_point listeners_t1,listeners_t2;
+        high_resolution_clock::time_point total_t1,total_t2;
+        double listeners_dt=0;
+        int listeners_count=0;
+
+        total_t1=high_resolution_clock::now();
+
+        while(running){
+            if(listeners.size() == 0){
+                std::this_thread::sleep_for(1000*microsecond);
+                continue; // Wait for added listener
+            }
+            //std::cout << "listeners>0\n";
+
+
+            haptikfabriken::HapticValues hv;
+
+            //uhaptikfabriken::fsVec3d p = uh.getPos();
+            //hv.position = haptikfabriken::fsVec3d(p.m_x,p.m_y,p.m_z);
+            bool readyContinue=false;
+            while(!readyContinue && running){
+                t2 = high_resolution_clock::now();
+                duration<double> dt = duration_cast<duration<double>>(t2 - t1);
+                if(listeners.size() == 0){
+                    std::this_thread::sleep_for(1000*microsecond);
+                    continue; // Wait for added listener
+                }
+
+                listener_mutex.lock();
+
+                for(auto listener : listeners){
+                    // Ready to call? (1/time since last time > hz)
+                    if(dt.count() > (1.0/listener->maxHapticListenerFrequency)){
+
+                        uhaptikfabriken::fsVec3d p = 1000*uh.getPos();
+                        hv.position = haptikfabriken::fsVec3d(p.m_x,p.m_y,p.m_z);
+                        //std::cout << "got x positon " << hv.position.m_x << "\n";
+
+                        hv.orientation.set(uh.getRot().m);
+
+                        uhaptikfabriken::fsVec3d f = uh.getCurrentForce();
+                        hv.currentForce = haptikfabriken::fsVec3d(f.m_x,f.m_y,f.m_z);
+                        hv.nextForce = hv.currentForce;
+
+                        // stats
+                        listeners_count++;
+                        listeners_t1=high_resolution_clock::now();
+
+
+                        listener->positionEvent(hv);
+
+                        // stats cont.
+                        listeners_t2=high_resolution_clock::now();
+                        duration<double> time_span = duration_cast<duration<double>>(listeners_t2 - listeners_t1);
+                        listeners_dt += time_span.count();
+
+                        double gain = 0.001;
+                        //std::cout << "sets force from listener: " << toString(hv.nextForce) << "\n";
+                        uh.setForce(uhaptikfabriken::fsVec3d(gain*hv.nextForce.m_x,
+                                                             gain*hv.nextForce.m_y,
+                                                             gain*hv.nextForce.m_z));
+                        readyContinue=true;
+                    }
+                }
+                listener_mutex.unlock();
+
+                if(listeners_count==10000){
+                    total_t2=high_resolution_clock::now();
+                    duration<double> total_time_span = duration_cast<duration<double>>(total_t2 - total_t1);
+
+                    std::cout << "called positionEvent() " << listeners_count
+                              << " times in " << total_time_span.count()
+                              << " s (" << listeners_count/total_time_span.count() << " hz) "
+                              << " with avarage execution time of " << listeners_count*listeners_dt/listeners_count << " ms\n\n";
+                    listeners_count = 0;
+                    listeners_dt=0;
+                    total_t1 = total_t2=high_resolution_clock::now();;
+                }
+
+
+
+                // Add a tiny sleep if maxFrequency not reached
+                if(!readyContinue){
+                    std::this_thread::sleep_for(10*microsecond); //100khz max
+                }
+            }
+            t1=t2;
+        }
+    }
+    bool running{true};
+
+};
+
+namespace haptikfabriken {
+void fsRot::identity() {
+    double a[3][3] = { {1, 0, 0 },
+                       {0, 1, 0 },
+                       {0, 0, 1 }};
+    set(a);
+}
+void fsRot::rot_x(double t){
+    double a[3][3] = { {1,   0,       0    },
+                       {0, cos(t), -sin(t) },
+                       {0, sin(t), cos(t)  }};
+    set(a);
+}
+void fsRot::rot_y(double t){
+    double a[3][3] = { {cos(t),  0, sin(t) },
+                       {   0,    1,   0    },
+                       {-sin(t), 0, cos(t) }};
+    set(a);
+}
+void fsRot::rot_z(double t){
+    double a[3][3] = { {cos(t), -sin(t), 0 },
+                       {sin(t), cos(t), 0 },
+                       {0, 0, 1 }};
+    set(a);
+}
+
+fsRot fsRot::transpose()
+{
+    double a[3][3] = { {m[0][0], m[1][0], m[2][0] },
+                       {m[0][1], m[1][1], m[2][1] },
+                       {m[0][2], m[1][2], m[2][2] }};
+    fsRot r;
+    r.set(a);
+    return r;
+}
+
+fsVec3d operator*(const fsRot &m, const fsVec3d &v)
+{
+    fsVec3d r;
+
+    r.m_x = m.m[0][0]*v.m_x + m.m[0][1]*v.m_y + m.m[0][2]*v.m_z;
+    r.m_y = m.m[1][0]*v.m_x + m.m[1][1]*v.m_y + m.m[1][2]*v.m_z;
+    r.m_z = m.m[2][0]*v.m_x + m.m[2][1]*v.m_y + m.m[2][2]*v.m_z;
+
+    return r;
+}
+}
+
+
+#ifndef UHAPTIK
 //------------------------------------------------------------------------------
 // https://www.ridgesolutions.ie/index.php/2012/12/13/boost-c-read-from-serial-port-with-timeout-example/
 //------------------------------------------------------------------------------
@@ -118,10 +323,15 @@ public:
     }
 };
 //------------------------------------------------------------------------------
+#endif
 
+/*
 std::string haptikfabriken::HaptikfabrikenInterface::serialport_name;
 unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
 {
+#ifdef UHAPTIK
+    return 1;
+#else
     using namespace boost::asio;
     boost::asio::io_service io;
     for (int os = 0; os < 2; ++os)
@@ -173,11 +383,18 @@ unsigned int haptikfabriken::HaptikfabrikenInterface::findUSBSerialDevices()
     }
 
     return 0;
+#endif
 }
-
-haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(haptikfabriken::Kinematics::configuration c,
+*/
+haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool wait_for_next_message, haptikfabriken::Kinematics::configuration c,
                                                                  haptikfabriken::HaptikfabrikenInterface::Protocol protocol): kinematicModel(c), fsthread(nullptr)
 {
+#ifdef UHAPTIK
+    fsthread = new FsHapticDeviceThread();
+#else
+
+
+
     switch (protocol)
     {
     case DAQ:
@@ -199,10 +416,11 @@ haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(haptikfabriken:
         fsthread = new FsHapticDeviceThread(c);
         break;
     }
+#endif
 }
 
-haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool, haptikfabriken::Kinematics::configuration c,
-                haptikfabriken::HaptikfabrikenInterface::Protocol protocol):haptikfabriken::HaptikfabrikenInterface(c,protocol){}
+//haptikfabriken::HaptikfabrikenInterface::HaptikfabrikenInterface(bool, haptikfabriken::Kinematics::configuration c,
+//                haptikfabriken::HaptikfabrikenInterface::Protocol protocol):haptikfabriken::HaptikfabrikenInterface(c,protocol){}
 
 
 haptikfabriken::HaptikfabrikenInterface::~HaptikfabrikenInterface()
@@ -215,63 +433,70 @@ haptikfabriken::HaptikfabrikenInterface::~HaptikfabrikenInterface()
 
 int haptikfabriken::HaptikfabrikenInterface::open()
 {
-    return fsthread->open();
+    fsthread->uh.findUSBSerialDevices();
+    return fsthread->uh.open();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::close()
 {
     std::cout << "Closing haptikfabrikeninterface " << this << "\n";
     if (fsthread)
-        fsthread->close();
+        fsthread->uh.close();
 }
 
 std::string haptikfabriken::HaptikfabrikenInterface::getErrorCode()
 {
-    return fsthread->getErrorCode();
+    return "error";//fsthread->getErrorCode();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::getEnc(int a[])
 {
-    fsthread->getEnc(a);
+    //fsthread->getEnc(a);
 }
 
 haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getBodyAngles()
 {
-    return fsthread->getBodyAngles();
+    return fsVec3d();//fsthread->getBodyAngles();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::getLatestCommandedMilliamps(int ma[])
 {
-    fsthread->getLatestCommandedMilliamps(ma);
+    //fsthread->getLatestCommandedMilliamps(ma);
 }
 
 int haptikfabriken::HaptikfabrikenInterface::getNumSentMessages()
 {
-    return fsthread->getNumSentMessages();
+    return 0;//fsthread->getNumSentMessages();
 }
 
 int haptikfabriken::HaptikfabrikenInterface::getNumReceivedMessages()
 {
-    return fsthread->getNumReceivedMessages();
+    return 0;//fsthread->getNumReceivedMessages();
 }
 
 haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getPos(bool blocking)
 {
+#ifdef UHAPTIK
+    uhaptikfabriken::fsVec3d p = fsthread->uh.getPos();
+    return fsVec3d(p.m_x,p.m_y,p.m_z);
+#else
     if (std::abs(fsthread->oldPosition.x() - fsthread->getPos().x()) > 0.01)
     {
         fsthread->oldPosition = fsthread->getPos();
     }
     return fsthread->getPos(blocking);
+#endif
 }
 
 haptikfabriken::fsRot haptikfabriken::HaptikfabrikenInterface::getRot()
 {
-    return fsthread->getRot();
+    fsRot r;
+    return r;//fsthread->uh.getRot();
 }
 
 haptikfabriken::fsVec3d haptikfabriken::HaptikfabrikenInterface::getCurrentForce()
 {
-    return fsthread->getCurrentForce();
+    return fsVec3d();//fsthread->uh.getCurrentForce();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f)
@@ -284,23 +509,25 @@ void haptikfabriken::HaptikfabrikenInterface::setForce(haptikfabriken::fsVec3d f
         fsVec3d dir(f.m_x / magnitude, f.m_y / magnitude, f.m_z / magnitude);
         f = dir * 5.0;
     }*/
+    std::cout << "sets force from setForce(): " << toString(f) << "\n";
 
-    fsthread->setForce(f);
+    fsthread->uh.setForce(uhaptikfabriken::fsVec3d(f.m_x,f.m_y,f.m_z));
 }
 
 void haptikfabriken::HaptikfabrikenInterface::setCurrent(haptikfabriken::fsVec3d amps)
 {
-    fsthread->setCurrent(amps);
+    //fsthread->setCurrent(amps);
 }
 
 std::bitset<5> haptikfabriken::HaptikfabrikenInterface::getSwitchesState()
 {
-    return fsthread->getSwitchesState();
+    std::bitset<5> b;
+    return b;//fsthread->getSwitchesState();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::calibrate()
 {
-    fsthread->calibrate();
+    //fsthread->calibrate();
 }
 
 void haptikfabriken::HaptikfabrikenInterface::addEventListener(haptikfabriken::HapticListener *listener)

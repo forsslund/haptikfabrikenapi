@@ -15,12 +15,12 @@
 #include "../external/sensoray/826api.h"
 
 //#define OVERDRIVE_EXPERIMENT
-//#define LISTENER_EXAMPLE
+#define LISTENER_EXAMPLE
 //#define SIMPLE_EXAMPE
 //#define BOOST_SERIAL_EXAMPLE
 //#define WEBSERV_TEST
 //#define KINEMATICS_TEST
-#define MAXFORCE_TEST
+//#define MAXFORCE_TEST
 
 #ifdef KINEMATICS_TEST
 constexpr int step = 50;
@@ -209,7 +209,7 @@ int main()
 #include <sys/select.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#include <stropts.h>
+//#include <stropts.h>
 
 int _kbhit()
 {
@@ -656,8 +656,12 @@ class MyHapticListener : public HapticListener
 {
 public:
     void positionEvent(HapticValues &hv)
-    {
+    {        
         fsVec3d f = -100 * hv.position;
+
+        std::cout << "Pos: " << toString(hv.position)
+                  << "\n";
+
         hv.nextForce = f;
     }
     MyHapticListener()
@@ -684,21 +688,30 @@ int main()
     hi.addEventListener(myHapticListener);
 
     // Main loop
+/*
+    char cc;
+    while (_kbhit())
+        std::cin >> cc;
+
     bool running = true;
     while (running)
     {
         if (_kbhit())
             running = false;
 
-        int enc[6];
-        hi.getEnc(enc);
+        //int enc[6];
+        //hi.getEnc(enc);
 
-        std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << " " << enc[0] << " " << enc[1] << " " << enc[2] << " "
-                  << "\n";
+        //std::cout << "Pos: " << toString(hi.getPos()) << " Force:" << toString(hi.getCurrentForce()) << " " << enc[0] << " " << enc[1] << " " << enc[2] << " "
+        //          << "\n";
 
         // Just wait for keyboard hit
         this_thread::sleep_for(std::chrono::microseconds(100000)); // 100ms
-    }
+    }*/
+
+    std::cout << "sleep 2s\n";
+    this_thread::sleep_for(std::chrono::microseconds(2000000));
+    std::cout << "Remove listeners and close\n";
 
     // Remove listener
     hi.removeEventListener(myHapticListener);
@@ -706,8 +719,8 @@ int main()
     myHapticListener = nullptr;
     hi.close();
 
-    char c;
-    std::cin >> c;
+    //char c;
+    //std::cin >> c;
 }
 #endif // LISTENER_EXAMPLE
 

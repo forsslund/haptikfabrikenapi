@@ -295,8 +295,8 @@ void FsUSBHapticDeviceThread::thread()
         // Check message
         if (hid_to_pc.info == 1)
         {
-            std::cout << "Calibration requested from hid! \n";
-            tell_hid_to_calibrate = true;
+            //std::cout << "Calibration requested from hid! \n";
+            //tell_hid_to_calibrate = true;
         }
 
         // If encoder set by webserv, use that instead

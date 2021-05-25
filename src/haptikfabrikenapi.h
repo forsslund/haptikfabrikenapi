@@ -348,14 +348,14 @@ public:
         }
 
         static configuration polhem_v3() {
-            double data[] = { 3, 0.0288, 0.0130, 0.014, // 0.010->0.014 2020-01-30
+            double data[] = { 3, 0.0288, 0.0130, 0.010,
                               0.1, 0.165, 0.1308,
                               0.175, 0.100, 0.100,
                               0.2045, 0.0, 0.0325, 0.150, // 0.137 0 0 0.150
-                              0.0603, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,1024, // 0.321
+                              0.0603, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,4096, // 0.321
                               5.0, 2000.0, 1.0,
                               0.0, 0.0, 0.0, 0.0, 0,
-                              8327,-10926,19386,0,30,0, // thrid was 27140
+                              8327,-10926,27140,0,30,0,
                               0,1,0,0,0,0};
             return Kinematics::configuration(data,"polhem_v3 hardcoded");
         }
@@ -440,16 +440,12 @@ class HaptikfabrikenInterface {
 public:
     enum Protocol {DAQ,UDP,USB};
 
-    static std::string serialport_name;
+    static std::string serialport;
     static unsigned int findUSBSerialDevices();
 
-    HaptikfabrikenInterface(Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
+    HaptikfabrikenInterface(bool wait_for_next_message=false,
+                            Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
                             Protocol protocol=DAQ);
-
-    // Deprecated constructor. Signature kept for backwards compatability.
-    HaptikfabrikenInterface(bool, Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
-                            Protocol protocol=DAQ);
-
     ~HaptikfabrikenInterface();
 
 
