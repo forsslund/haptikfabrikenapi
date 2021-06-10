@@ -31,22 +31,13 @@ public:
 
     FsHapticDeviceThread() {
         std::cout << "haptikfabrikenapi.cpp FsHapticDeviceThread() constructor!\n";
-        pelle();
-        //std::thread a(&FsHapticDeviceThread::pelle,this);
-        //a.join();
         m_event_thread = std::thread{&FsHapticDeviceThread::event_thread, this};
-        //m_event_thread.join();
         std::cout << "after thread created!\n";
     }
     ~FsHapticDeviceThread(){
         std::cout << "Destructor!\n";
         running=false;
         m_event_thread.join();
-    }
-
-    void pelle(){
-        std::cout << "Pelle!\n";
-
     }
 
     std::set<haptikfabriken::HapticListener*> listeners;
